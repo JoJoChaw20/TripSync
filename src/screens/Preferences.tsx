@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Lock, Unlock, Sparkles } from 'lucide-react'
 import { Button, Card, SectionLabel, Pill } from '../components/ui'
+import { MochiNote } from '../components/MochiNote'
 import { travelers, allInterests } from '../data/mockData'
 import type { ScreenProps } from './types'
 
-export default function Preferences({ onNext }: ScreenProps) {
+export default function Preferences({ onNext, petEmotion, petMessage }: ScreenProps) {
   const [revealed, setRevealed] = useState<string[]>([])
   const allRevealed = revealed.length === travelers.length
 
@@ -27,6 +28,8 @@ export default function Preferences({ onNext }: ScreenProps) {
         title="Group Preference Sync & Consensus Engine"
         subtitle="Each traveller privately submits interests, budget and priorities. Tap a friend to reveal their private input — TripSync's AI finds the overlap so nobody has to argue."
       />
+
+      <MochiNote emotion={petEmotion} message={petMessage} />
 
       <div className="grid gap-4 sm:grid-cols-4">
         {travelers.map((t) => {

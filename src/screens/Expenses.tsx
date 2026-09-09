@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Wallet, ArrowRight, CheckCircle2, Circle } from 'lucide-react'
 import { Button, Card, SectionLabel } from '../components/ui'
+import { MochiNote } from '../components/MochiNote'
 import { expenses, travelers } from '../data/mockData'
 import type { ScreenProps } from './types'
 
@@ -36,7 +37,7 @@ function computeSettlements() {
   return { balance, settlements }
 }
 
-export default function Expenses({ onNext }: ScreenProps) {
+export default function Expenses({ onNext, petEmotion, petMessage }: ScreenProps) {
   const { balance, settlements } = useMemo(() => computeSettlements(), [])
   const [settled, setSettled] = useState<number[]>([])
   const total = expenses.reduce((s, e) => s + e.amount, 0)
@@ -48,6 +49,8 @@ export default function Expenses({ onNext }: ScreenProps) {
         title="Group Expense & Cost Splitting"
         subtitle="TripSync tracks who paid what and automatically figures out the smallest number of transfers to settle up — no more spreadsheets."
       />
+
+      <MochiNote emotion={petEmotion} message={petMessage} />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         <Card className="p-5">

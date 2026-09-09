@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Clock, MapPin, Wallet, Users } from 'lucide-react'
 import { Button, Card, SectionLabel, Pill } from '../components/ui'
+import { MochiNote } from '../components/MochiNote'
 import { originalItinerary, placeById, travelers, tripPlans } from '../data/mockData'
 import type { ScreenProps } from './types'
 
@@ -13,7 +14,7 @@ const budgetBreakdown = [
   { label: 'Transport', pct: 8, color: '#d9a9bd' },
 ]
 
-export default function Itinerary({ onNext }: ScreenProps) {
+export default function Itinerary({ onNext, petEmotion, petMessage }: ScreenProps) {
   const [activeDay, setActiveDay] = useState(0)
   const plan = tripPlans.find((p) => p.id === 'balanced')!
   const day = originalItinerary[activeDay]
@@ -25,6 +26,8 @@ export default function Itinerary({ onNext }: ScreenProps) {
         title="Final Itinerary — “Guangzhou 2026”"
         subtitle="Flights, hotel, restaurants, attractions and transport, organized into one shared timeline the whole group can see."
       />
+
+      <MochiNote emotion={petEmotion} message={petMessage} />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
         <div>

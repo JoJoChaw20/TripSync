@@ -17,7 +17,6 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import { StepperNav, type JourneyStep } from './components/StepperNav'
-import { PetBubble } from './components/PetBubble'
 import { type PetEmotion } from './components/Pet'
 import { AppIcon } from './components/AppIcon'
 import { ProgressDots } from './components/ui'
@@ -116,7 +115,7 @@ function App() {
             exit={{ opacity: 0, x: direction * -24 }}
             transition={{ duration: 0.28, ease: 'easeOut' }}
           >
-            <Screen onNext={() => goTo(index + 1)} onJump={goTo} />
+            <Screen onNext={() => goTo(index + 1)} onJump={goTo} petEmotion={step.petEmotion} petMessage={step.petMessage} />
           </motion.div>
         </AnimatePresence>
       </main>
@@ -145,8 +144,6 @@ function App() {
           </button>
         </div>
       </footer>
-
-      <PetBubble emotion={step.petEmotion} message={step.petMessage} />
     </div>
   )
 }

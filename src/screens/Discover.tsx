@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Bookmark, BookmarkCheck, Star, Sparkles, Users, Home as IndoorIcon } from 'lucide-react'
 import { Button, Card, SectionLabel, Pill } from '../components/ui'
+import { MochiNote } from '../components/MochiNote'
 import { places } from '../data/mockData'
 import type { ScreenProps } from './types'
 
 type Filter = 'all' | 'ai' | 'traveller'
 
-export default function Discover({ onNext }: ScreenProps) {
+export default function Discover({ onNext, petEmotion, petMessage }: ScreenProps) {
   const [filter, setFilter] = useState<Filter>('all')
   const [saved, setSaved] = useState<string[]>(['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'])
 
@@ -24,6 +25,8 @@ export default function Discover({ onNext }: ScreenProps) {
         title="Discover & Save Places"
         subtitle="AI-generated suggestions sit next to recommendations from real travellers who've actually been there. Save whatever fits — TripSync slots them into your itinerary later."
       />
+
+      <MochiNote emotion={petEmotion} message={petMessage} />
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">

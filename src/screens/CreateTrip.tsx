@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, CalendarRange, Wallet, Plus, Check } from 'lucide-react'
 import { Button, Card, SectionLabel, Pill } from '../components/ui'
+import { MochiNote } from '../components/MochiNote'
 import { travelers, tripMeta } from '../data/mockData'
 import type { ScreenProps } from './types'
 
@@ -20,7 +21,7 @@ function FlagCN() {
   )
 }
 
-export default function CreateTrip({ onNext }: ScreenProps) {
+export default function CreateTrip({ onNext, petEmotion, petMessage }: ScreenProps) {
   const [budget, setBudget] = useState(tripMeta.budgetPerPerson)
   const [created, setCreated] = useState(false)
 
@@ -31,6 +32,8 @@ export default function CreateTrip({ onNext }: ScreenProps) {
         title="Create your Smart Trip Workspace"
         subtitle="One dedicated page for destination, dates, travellers, budget, saved places, itinerary and expenses — instead of five different apps."
       />
+
+      <MochiNote emotion={petEmotion} message={petMessage} />
 
       <Card className="p-6 sm:p-8">
         <div className="grid gap-6 sm:grid-cols-2">

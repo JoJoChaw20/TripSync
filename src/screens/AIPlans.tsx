@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Check, Sparkles, TrendingUp } from 'lucide-react'
 import { Button, Card, SectionLabel, ScoreRing, Pill } from '../components/ui'
+import { MochiNote } from '../components/MochiNote'
 import { tripPlans } from '../data/mockData'
 import type { ScreenProps } from './types'
 
@@ -14,7 +15,7 @@ const scoreLabels: Record<string, string> = {
   feasibility: 'Schedule feasibility',
 }
 
-export default function AIPlans({ onNext }: ScreenProps) {
+export default function AIPlans({ onNext, petEmotion, petMessage }: ScreenProps) {
   const [selected, setSelected] = useState<string | null>(null)
 
   return (
@@ -24,6 +25,8 @@ export default function AIPlans({ onNext }: ScreenProps) {
         title="AI Trip Generator"
         subtitle="Instead of one forced itinerary, TripSync proposes several — each scored on budget fit, group satisfaction, preference match, efficiency, convenience and feasibility."
       />
+
+      <MochiNote emotion={petEmotion} message={petMessage} />
 
       <div className="grid gap-5 lg:grid-cols-3">
         {tripPlans.map((plan, i) => {
