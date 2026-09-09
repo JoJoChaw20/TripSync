@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Sparkles, Users2, CloudSun, Heart } from 'lucide-react'
-import { Pet } from '../components/Pet'
+import { AppIcon } from '../components/AppIcon'
 import { Button, Card, Pill } from '../components/ui'
 import type { ScreenProps } from './types'
 
@@ -42,7 +42,7 @@ export default function Welcome({ onNext }: ScreenProps) {
         className="relative"
       >
         <div className="absolute inset-0 -z-10 rounded-full bg-sage/50 blur-2xl" />
-        <Pet emotion="happy" size={180} />
+        <AppIcon size={180} />
       </motion.div>
 
       <div className="grid w-full max-w-4xl gap-4 sm:grid-cols-3">

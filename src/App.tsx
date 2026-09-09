@@ -18,7 +18,8 @@ import {
 } from 'lucide-react'
 import { StepperNav, type JourneyStep } from './components/StepperNav'
 import { PetBubble } from './components/PetBubble'
-import { Pet, type PetEmotion } from './components/Pet'
+import { type PetEmotion } from './components/Pet'
+import { AppIcon } from './components/AppIcon'
 import { ProgressDots } from './components/ui'
 
 import Welcome from './screens/Welcome'
@@ -81,11 +82,8 @@ function App() {
       <header className="sticky top-0 z-30 border-b border-black/[0.05] bg-cream/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2">
-            <Pet emotion="happy" size={34} bob={false} />
-            <div className="leading-tight">
-              <p className="font-display text-lg font-extrabold text-ink">TripSync</p>
-              <p className="hidden text-[11px] font-semibold text-ink-soft sm:block">Interactive prototype · Hackathon demo</p>
-            </div>
+            <AppIcon size={34} />
+            <p className="font-display text-lg font-extrabold text-ink">TripSync</p>
           </div>
           <div className="flex items-center gap-2">
             <span

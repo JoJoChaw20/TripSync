@@ -1,32 +1,44 @@
-# React + TypeScript + Vite
+# TripSync
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A collaborative travel workspace prototype — AI-optimized itineraries, recommendations from real travellers, and a Preservation-First replanning engine that adapts your trip when the weather (or the world) doesn't cooperate.
 
-Currently, two official plugins are available:
+**Live demo:** https://trip-sync-blue.vercel.app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech stack
 
-## React Compiler
+- React 19 + TypeScript
+- Vite
+- Tailwind CSS
+- Framer Motion
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Getting started
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+The app runs at `http://localhost:5173` by default.
+
+## Scripts
+
+- `npm run dev` — start the local dev server
+- `npm run build` — type-check and build for production (outputs to `dist/`)
+- `npm run preview` — preview the production build locally
+- `npm run lint` — run Oxlint
+
+## Deploying
+
+This project is deployed on Vercel (project `trip-sync`, linked via `.vercel/`).
+
+```bash
+npm install -g vercel   # one-time
+vercel login            # one-time
+vercel --prod           # deploy current working directory to production
+```
+
+Alternatively, connect the GitHub repo at [vercel.com/new](https://vercel.com/new) to enable auto-deploy on every push to `main`.
+
+## Mochi — the TripSync pet
+
+Mochi's illustrations live in `src/assets/pet/` (6 reactive expressions: happy, sad, angry, aggrieved, shy, scared — used by [`Pet.tsx`](src/components/Pet.tsx)) and `src/assets/icon/` (the static map/backpack mark used for the app icon and header logo, via [`AppIcon.tsx`](src/components/AppIcon.tsx)).
