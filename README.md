@@ -18,8 +18,6 @@
 
 ### The Problem
 
-<!-- TODO: tailor this to your actual research/interviews before submitting. -->
-
 Group trips are planned once, on a spreadsheet or a shared doc, and then left to survive contact with reality. In practice:
 
 - **Plans are static.** A rained-out afternoon, a delayed flight, or a closed attraction forces someone in the group to manually re-shuffle the whole itinerary, usually mid-trip and under stress.
@@ -94,19 +92,113 @@ Result: zero missed activities, zero extra cost, and one bonus meal squeezed int
 
 ### 2.2 Ideation Boards
 
-<!-- TODO: embed your mindmap/crazy-eights/affinity-diagram images here, 1-2 lines of context under each. -->
+**Board 1: the whole idea space we explored.** We started one problem statement
+over, under "Beating the Burnout", before switching tracks. Dropped branches are
+marked, because the dead ends are part of how we got here.
 
-```md
-![Mindmap](mindmap.png)
+```mermaid
+mindmap
+  root("Which problem<br/>do we solve?")
+    Burnout["TRACK A<br/>Beating the Burnout"]
+      Bal["Balance<br/>student capacity manager"]
+        B1["One capacity score<br/>e.g. 94 percent, high load"]
+        B2["TRACK, UNDERSTAND, DETECT,<br/>REBALANCE, RECOVER"]
+        B3["AI load balancer<br/>keep, move, combine, reduce"]
+        B4["What-if simulator<br/>can I take another shift?"]
+        BX["DROPPED<br/>reads as one more<br/>wellness dashboard"]
+    Travel["TRACK B<br/>Travel Planner"]
+      V1["TripSync v1<br/>first draft"]
+        V1a["Smart trip workspace"]
+        V1b["AI trip generator<br/>Saver, Balanced, Comfort"]
+        V1c["Trip score and budget planner"]
+        V1d["Group consensus and voting"]
+        V1e["Expense splitting"]
+        V1X["TOO GENERIC<br/>Trip.Planner already<br/>does all of this"]
+      V2["TripSync final<br/>CHOSEN"]
+        V2a["AI Travel Pet, Mochi<br/>the interface, not decoration"]
+        V2b["Preservation-First replanning<br/>rearrange saved places first"]
+        V2c["Real traveller recommendations<br/>experience, not just data"]
+```
+
+**Board 2: problem tree for the track we chose.** Root causes at the bottom, the
+core problem in the middle, and what it actually does to travellers at the top.
+The bottom row is what TripSync has to attack; the top row is what a judge
+recognises from their own group trips.
+
+```mermaid
+flowchart BT
+    C1["Plans are static documents<br/>a locked itinerary cannot react"]
+    C2["Group members want<br/>different things at<br/>different budgets"]
+    C3["Information scattered across<br/>booking sites, maps,<br/>chat and spreadsheets"]
+    C4["Real-world conditions change<br/>after the plan is locked<br/>rain, closures, delays"]
+
+    CORE["CORE PROBLEM<br/>group trips survive planning<br/>but not contact with reality"]
+
+    E1["One person becomes the<br/>group's default trip-fixer"]
+    E2["Planned places get silently<br/>dropped, never rescheduled"]
+    E3["Who owes who is<br/>reconstructed from memory"]
+    E4["The plan gets abandoned<br/>mid-trip and improvised"]
+
+    C1 --> CORE
+    C2 --> CORE
+    C3 --> CORE
+    C4 --> CORE
+    CORE --> E1
+    CORE --> E2
+    CORE --> E3
+    CORE --> E4
+```
+
+**Board 3: how the idea actually evolved.** Two pivots during ideation, each
+triggered by the same question, *what here is genuinely ours?*, plus one feature
+that only surfaced later while we were designing the screens. This is the diagram
+that shows the reasoning rather than just the outcome.
+
+```mermaid
+flowchart LR
+    Start(["Hackathon brief"]) -->|"pick a track"| A["Balance<br/>burnout capacity manager"]
+    A -->|"no bright spot,<br/>competes with task managers,<br/>sleep trackers, mindfulness apps"| ADead["DROPPED"]
+
+    Start -->|"switch track"| B["TripSync v1<br/>AI collaborative planner"]
+    B -->|"solid but generic,<br/>Trip.Planner already ships this"| C["Keep the foundation,<br/>find the bright spot"]
+
+    C -->|"give it a face:<br/>a companion, not a dashboard"| D["+ AI Travel Pet, Mochi"]
+    C -->|"protect the user's<br/>own choices on disruption"| E["+ Preservation-First replanning"]
+
+    D --> F["TripSync final<br/>CHOSEN"]
+    E --> F
+
+    F -.->|"surfaced while building:<br/>if a disruption frees two hours,<br/>what actually fills them?"| G["+ Colour Walk<br/>added during design,<br/>not ideation"]
+```
+
+**Board 4: user flow for our differentiator.** Preservation-First replanning as
+an actual decision path. The point of the diagram is the branch on the right:
+suggesting somewhere new is the *last* resort, not the first move, which is the
+opposite of how most planners behave.
+
+```mermaid
+flowchart TD
+    S(["Disruption detected<br/>rain, closure or flight delay"]) --> Q1{"Does it affect a<br/>planned activity?"}
+    Q1 -->|"No"| KEEP["Leave the plan alone<br/>Mochi stays quiet"]
+    Q1 -->|"Yes"| Q2{"Can a place they already<br/>saved fill this slot?"}
+
+    Q2 -->|"Yes"| Q3{"Is there a suitable day<br/>for the displaced place?"}
+    Q3 -->|"Yes"| SWAP["Swap the two saved places<br/>nothing is lost, only reordered"]
+    Q3 -->|"No"| LAST
+
+    Q2 -->|"No"| LAST["LAST RESORT<br/>search nearby for something new<br/>matching interests, budget, weather"]
+
+    SWAP --> ASK{"Mochi explains the change<br/>and asks permission"}
+    LAST --> ASK
+    ASK -->|"Accept"| APPLY["Itinerary updates"]
+    ASK -->|"Reject"| ORIG["Original plan kept<br/>Mochi never changes it unasked"]
 ```
 
 ### 2.3 Mentor Consultation
 
-<!-- TODO: log each mentor session, even ones where you pushed back on the advice. -->
-
 | Date | Mentor | Feedback Received | What Was Changed |
 | --- | --- | --- | --- |
-| 8/9/2026 | Janelle Tan | Mochi (the pet) is a distinctive, memorable feature that genuinely sets TripSync apart from other travel apps, and it should be treated as the product's bright spot. Rather than spreading effort across many features, the team should pick the strongest one and focus on making it shine. | We moved away from assuming that packing in more features improves our chances of winning. Instead, we refocused on sharpening Mochi as our standout, differentiating feature, and prioritized depth on the one idea that genuinely solves the problem over breadth across many. |
+| 8/9/2026 | Janelle Tan | Mochi (the pet) is a distinctive, memorable feature that genuinely sets TripSync apart from other travel apps, and it should be treated as the product's bright spot. Rather than spreading effort across many features, the team should pick the strongest one and focus on making it shine. | We stopped assuming that more features meant a stronger submission, and three concrete things changed as a result. First, Mochi is now framed as the product's *interface* rather than a mascot: it is the thing that surfaces a disruption, explains why, and asks permission (see the pet entry in section 4 and its own row in the competitor comparison in section 1). Second, our three-week build plan protects the Preservation-First engine as the one untouchable week. Third, breadth features that would have competed for that time, realtime sync and LLM-scored itineraries, were explicitly demoted to stretch goals and named as the first things we cut. |
 
 ---
 
@@ -187,35 +279,30 @@ flowchart LR
     subgraph Supa["<b>Database & platform services</b> · Supabase"]
         DB[("Postgres<br/>trips, places, itinerary_items,<br/>expenses, travelers, trip_access")]
         AUTH["Auth + Row Level Security<br/>owner / editor / viewer"]
-        RT["Realtime<br/>Postgres change feed"]
+        RT["Realtime change feed<br/><i>stretch goal</i>"]
     end
 
     subgraph Ext["<b>External APIs</b>"]
-        AI["LLM · Claude / GPT-4o-mini"]
         Weather["Open-Meteo · weather"]
-        Flight["AeroDataBox · flight status"]
-        Places["OpenStreetMap · nearby places"]
+        Flight["AeroDataBox · flight status<br/><i>stretch goal</i>"]
+        AI["Google Gemini · scoring<br/><i>stretch goal</i>"]
+        Places["OpenStreetMap · nearby places<br/><i>stretch goal</i>"]
     end
 
-    UI -->|"reads & writes trips"| Supa
-    UI -->|"anything needing a key"| Server
-    Server --> Ext
-    Server --> DB
+    UI -->|"wk 1 · trips, places, expenses"| DB
+    UI -->|"wk 1 · share-link roles"| AUTH
+    UI -->|"wk 3 · calls for keyed APIs"| FN
+    FN -->|"wk 3 · rain detection"| Weather
 
-    DB --- AUTH
-    DB --- RT
+    UI -.->|"stretch"| RT
+    FN -.->|"stretch"| Flight
+    FN -.->|"stretch"| AI
+    FN -.->|"stretch"| Places
 ```
 
-| Diagram edge | When it gets built |
-| --- | --- |
-| Frontend to Supabase Postgres | 21 – 27 Sep, persistence |
-| Frontend to Supabase Auth + RLS | 21 – 27 Sep, share links and roles |
-| Serverless function to Open-Meteo | 5 – 11 Oct, live weather signal |
-| Frontend to Supabase Realtime | Stretch goal |
-| Serverless function to AeroDataBox | Stretch goal |
-| Serverless function to LLM | Stretch goal |
+Solid arrows are committed in the three-week plan below and labelled with the week they land; dotted arrows are stretch goals we will only reach if we are ahead. Only the "Built and deployed today" box exists right now: the live demo is the frontend alone, reading from `mockData.ts`.
 
-Only the "Built and deployed today" box exists right now: the live demo is the frontend alone, reading from `mockData.ts`. Everything to the right of it is what the build phase adds. Note that the Preservation-First engine, our middle and most important week, has no edge on this diagram at all, because it is pure application logic: our core differentiator needs no external service to work.
+Note that the Preservation-First engine, our middle and most important week, has no edge on this diagram at all, because it is pure application logic. Our core differentiator needs no external service to work, which is exactly why we scheduled it where nothing outside the team can block it.
 
 ### Build plan & scope
 
@@ -232,6 +319,7 @@ Only the "Built and deployed today" box exists right now: the live demo is the f
 - **Realtime sync** (Supabase Realtime subscriptions), so two travellers see each other's edits live rather than on refresh.
 - **AeroDataBox flight status**, extending live disruption detection beyond weather.
 - **LLM-scored itineraries**, replacing our rules-based scoring with a real model call.
+- **OpenStreetMap place lookup**, so the engine's last-resort branch can suggest a real nearby alternative. Until then that branch draws from our existing curated place list, which is enough to demonstrate the behaviour.
 
 **What we cut first if we fall behind.** Naming this up front is part of the plan, not an admission of failure:
 
