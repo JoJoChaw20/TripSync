@@ -333,36 +333,3 @@ Notably, the middle week is not on that list. If everything else slipped and we 
 
 **Resource & time awareness.** Three weeks (21 Sep to 11 Oct) across three frontend-strong people (React, Tailwind), working alongside coursework, is roughly nine person-weeks of part-time capacity, and that is the single hardest constraint on this plan. It is why we lean on managed services rather than infrastructure we would have to build and operate: Supabase gives us database, auth and realtime as configuration instead of three separate weeks of backend work, which is most of our budget gone if we wrote it ourselves. It is also why realtime collaboration sits in the stretch list rather than the committed weeks: it is the one planned capability that Wanderlog already does well, so we would rather spend our scarce weeks on the thing nobody else does and ship refresh-based syncing than demo a half-working live cursor. The hackathon submission itself was deliberately frontend-only for the same reason, so all three of us could spend the time on UI/UX and the demo rather than on plumbing a judge cannot see. The two real risks we are watching are the Supabase free tier pausing after a week of inactivity (we wake it before any demo) and the free API rate limits above, which is why every external call is polled on a schedule and cached rather than requested per page view.
 
----
-
-## Repository structure & running locally
-
-```bash
-npm install
-npm run dev
-```
-
-The app runs at `http://localhost:5173` by default.
-
-**Scripts**
-
-- `npm run dev`: start the local dev server
-- `npm run build`: type-check and build for production (outputs to `dist/`)
-- `npm run preview`: preview the production build locally
-- `npm run lint`: run Oxlint
-
-**Deploying**
-
-This project is deployed on Vercel (project `trip-sync`, linked via `.vercel/`).
-
-```bash
-npm install -g vercel   # one-time
-vercel login            # one-time
-vercel --prod           # deploy current working directory to production
-```
-
-Alternatively, connect the GitHub repo at [vercel.com/new](https://vercel.com/new) to enable auto-deploy on every push to `main`.
-
-**Mochi, the TripSync pet**
-
-Mochi's illustrations live in `src/assets/pet/` (6 reactive expressions: happy, sad, angry, aggrieved, shy, scared; used by [`Pet.tsx`](src/components/Pet.tsx)) and `src/assets/icon/` (the static map/backpack mark used for the app icon and header logo, via [`AppIcon.tsx`](src/components/AppIcon.tsx)).
