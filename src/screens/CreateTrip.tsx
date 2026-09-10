@@ -1,118 +1,292 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { MapPin, CalendarRange, Wallet, Plus, Check } from 'lucide-react'
-import { Button, Card, SectionLabel, Pill } from '../components/ui'
-import { MochiNote } from '../components/MochiNote'
-import { travelers, tripMeta } from '../data/mockData'
-import type { ScreenProps } from './types'
+import { CalendarRange, MapPin, MessageSquare, Plus, Trash2, Users, Wallet } from 'lucide-react'
+import { Button, Card } from '../components/ui'
+import { Pet } from '../components/Pet'
+import { travelers, type TripLeg, type TripSummary } from '../data/mockData'
+import { dateRange, setTotalDays, totalDays as sumDays } from '../lib/trip'
 
-function FlagCN() {
+/** Only a hint for the flag and cover art. Any city the user types is fine. */
+const KNOWN: Record<string, { flag: string; cover: string }> = {
+  guangzhou: { flag: '🇨🇳', cover: '🗼' },
+  shenzhen: { flag: '🇨🇳', cover: '🏙️' },
+  'hong kong': { flag: '🇭🇰', cover: '🌆' },
+  macau: { flag: '🇲🇴', cover: '🎰' },
+  penang: { flag: '🇲🇾', cover: '🦞' },
+  'george town': { flag: '🇲🇾', cover: '🦞' },
+  'kuala lumpur': { flag: '🇲🇾', cover: '🏙️' },
+  bangkok: { flag: '🇹🇭', cover: '🍲' },
+  'chiang mai': { flag: '🇹🇭', cover: '🏞️' },
+  'ho chi minh city': { flag: '🇻🇳', cover: '🛵' },
+  hanoi: { flag: '🇻🇳', cover: '🍜' },
+  'da nang': { flag: '🇻🇳', cover: '🏖️' },
+  singapore: { flag: '🇸🇬', cover: '🌴' },
+  bali: { flag: '🇮🇩', cover: '🏝️' },
+  jakarta: { flag: '🇮🇩', cover: '🏙️' },
+  seoul: { flag: '🇰🇷', cover: '🏯' },
+  busan: { flag: '🇰🇷', cover: '🌊' },
+  tokyo: { flag: '🇯🇵', cover: '🗾' },
+  osaka: { flag: '🇯🇵', cover: '🍢' },
+  taipei: { flag: '🇹🇼', cover: '🧋' },
+  manila: { flag: '🇵🇭', cover: '🌺' },
+}
+
+const SUGGESTIONS = ['Penang', 'Bangkok', 'Da Nang', 'Seoul', 'Taipei', 'Bali']
+
+function lookup(city: string) {
+  return KNOWN[city.trim().toLowerCase()] ?? { flag: '🌏', cover: '📍' }
+}
+
+/**
+ * Type any city. Everything here is optional except the first destination,
+ * and all of it stays editable in Trip settings afterwards.
+ */
+export default function CreateTrip({ onCreate }: { onCreate: (trip: TripSummary) => void }) {
+  const [draft, setDraft] = useState('')
+  const [legs, setLegs] = useState<TripLeg[]>([])
+  const [people, setPeople] = useState(2)
+  const [budget, setBudget] = useState(1200)
+  const [name, setName] = useState('')
+  const [notes, setNotes] = useState('')
+
+  const total = sumDays(legs)
+
+  function addCity(city: string) {
+    const clean = city.trim()
+    if (!clean || legs.some((l) => l.city.toLowerCase() === clean.toLowerCase())) return
+    setLegs((ls) => [...ls, { city: clean, ...lookup(clean), days: 3 } as TripLeg])
+    setDraft('')
+  }
+
+  function setDays(i: number, days: number) {
+    setLegs((ls) => ls.map((l, n) => (n === i ? { ...l, days: Math.max(1, Math.min(30, days)) } : l)))
+  }
+
+  function submit() {
+    if (legs.length === 0) return
+    const first = lookup(legs[0].city)
+    onCreate({
+      id: 'trip-' + Date.now(),
+      name: name.trim() || legs.map((l) => l.city).join(' + '),
+      flag: legs[0].flag ?? first.flag,
+      destination: legs.map((l) => l.city).join(' → '),
+      dates: dateRange(total),
+      days: total,
+      legs,
+      travelerCount: people,
+      status: 'planning',
+      budget,
+      cover: first.cover,
+      highlight: notes.trim() || 'Nothing saved yet',
+      notes: notes.trim() || undefined,
+    })
+  }
+
   return (
-    <svg width="22" height="16" viewBox="0 0 30 20" className="shrink-0 rounded-sm shadow-sm">
-      <rect width="30" height="20" fill="#DE2910" />
-      <g fill="#FFDE00">
-        <path d="M5 3 L6 6.5 L3 4.6 L7 4.6 L4 6.5 Z" />
-        <path d="M10.5 1.5 L11 2.6 L12.2 2.6 L11.2 3.3 L11.6 4.4 L10.5 3.7 L9.4 4.4 L9.8 3.3 L8.8 2.6 L10 2.6 Z" />
-        <path d="M13 4 L13.5 5.1 L14.7 5.1 L13.7 5.8 L14.1 6.9 L13 6.2 L11.9 6.9 L12.3 5.8 L11.3 5.1 L12.5 5.1 Z" />
-        <path d="M13 8 L13.5 9.1 L14.7 9.1 L13.7 9.8 L14.1 10.9 L13 10.2 L11.9 10.9 L12.3 9.8 L11.3 9.1 L12.5 9.1 Z" />
-        <path d="M10.5 11 L11 12.1 L12.2 12.1 L11.2 12.8 L11.6 13.9 L10.5 13.2 L9.4 13.9 L9.8 12.8 L8.8 12.1 L10 12.1 Z" />
-      </g>
-    </svg>
+    <div className="pb-2">
+      <div className="mb-4 flex items-start gap-3">
+        <Pet emotion="happy" size={50} bob={false} />
+        <Card className="flex-1 rounded-tl-sm p-3">
+          <p className="text-[13px] leading-relaxed text-ink">
+            “Just tell me where. Everything else you can skip now and change later.”
+          </p>
+        </Card>
+      </div>
+
+      <Field icon={MapPin} label="Where to" required>
+        <div className="flex items-center gap-2 rounded-2xl border-2 border-moss/30 bg-white px-3 py-2 focus-within:border-moss-dark">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addCity(draft)
+              }
+            }}
+            placeholder="Type any city…"
+            aria-label="Add a city"
+            className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-soft/70"
+          />
+          {draft.trim() && (
+            <button
+              onClick={() => addCity(draft)}
+              className="flex shrink-0 items-center gap-1 rounded-full bg-moss-dark px-3 py-1.5 text-[12px] font-extrabold text-white"
+            >
+              <Plus size={12} /> Add
+            </button>
+          )}
+        </div>
+
+        {legs.length === 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {SUGGESTIONS.map((c) => (
+              <button
+                key={c}
+                onClick={() => addCity(c)}
+                className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-[12px] font-bold text-ink-soft transition hover:border-moss-dark hover:text-moss-dark"
+              >
+                {lookup(c).flag} {c}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {legs.length > 0 && (
+          <div className="mt-2 flex flex-col gap-2">
+            {legs.map((leg, i) => (
+              <Card key={leg.city} className="flex items-center gap-2 p-2.5">
+                <span className="text-lg">{leg.flag}</span>
+                <p className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-ink">{leg.city}</p>
+                <Stepper value={leg.days} onChange={(v) => setDays(i, v)} />
+                <span className="w-7 shrink-0 text-[10px] font-bold text-ink-soft">days</span>
+                <button
+                  onClick={() => setLegs((ls) => ls.filter((_, n) => n !== i))}
+                  aria-label={`Remove ${leg.city}`}
+                  className="shrink-0 rounded-full p-1.5 text-ink-soft transition hover:bg-black/5 hover:text-coral"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </Card>
+            ))}
+          </div>
+        )}
+      </Field>
+
+      {legs.length > 0 && (
+        <Field icon={CalendarRange} label="How long">
+          <div className="flex items-center gap-3 rounded-2xl border-2 border-moss/30 bg-white px-3 py-2.5">
+            <Stepper value={total} onChange={(v) => setLegs((ls) => setTotalDays(ls, v))} />
+            <div className="min-w-0">
+              <p className="font-display text-lg font-extrabold leading-none text-moss-dark">{total} days</p>
+              <p className="mt-0.5 truncate text-[11px] font-semibold text-ink-soft">{dateRange(total)}</p>
+            </div>
+          </div>
+          {legs.length > 1 && (
+            <p className="mt-1.5 pl-1 text-[11px] font-semibold text-ink-soft">
+              {legs.map((l) => `${l.city} ${l.days}d`).join(' · ')} — adjust each city above
+            </p>
+          )}
+        </Field>
+      )}
+
+      <Field icon={Users} label="Who's coming">
+        <div className="flex items-center gap-2">
+          {travelers.slice(0, 4).map((t, i) => (
+            <button
+              key={t.id}
+              onClick={() => setPeople(i + 1)}
+              title={t.name}
+              className={`flex h-10 w-10 items-center justify-center rounded-full text-lg transition ${
+                i < people ? 'ring-2 ring-moss-dark' : 'opacity-35'
+              }`}
+              style={{ backgroundColor: `${t.color}66` }}
+            >
+              {t.emoji}
+            </button>
+          ))}
+          <span className="ml-1 text-[12px] font-bold text-ink-soft">{people} travelling</span>
+        </div>
+      </Field>
+
+      <Field icon={Wallet} label="Budget per person">
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] font-extrabold text-ink-soft">RM</span>
+          <input
+            type="number"
+            min={0}
+            step={50}
+            value={budget}
+            onChange={(e) => setBudget(Math.max(0, Number(e.target.value)))}
+            aria-label="Budget per person in ringgit"
+            className="w-28 rounded-xl border-2 border-black/10 bg-white px-2.5 py-1.5 text-[14px] font-extrabold text-ink outline-none focus:border-moss-dark"
+          />
+          <input
+            type="range"
+            min={200}
+            max={6000}
+            step={100}
+            value={Math.min(6000, budget)}
+            onChange={(e) => setBudget(Number(e.target.value))}
+            aria-label="Budget slider"
+            className="min-w-0 flex-1 accent-[#8ba863]"
+          />
+        </div>
+      </Field>
+
+      <Field icon={MessageSquare} label="Anything Mochi should know">
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+          placeholder="e.g. mostly food, hate early mornings, my mum is coming so nothing with lots of stairs"
+          className="w-full resize-none rounded-2xl border-2 border-black/10 bg-white px-3 py-2.5 text-[13px] font-semibold leading-snug text-ink outline-none focus:border-moss-dark placeholder:font-normal placeholder:text-ink-soft/70"
+        />
+        <p className="mt-1 pl-1 text-[11px] font-semibold text-ink-soft">
+          This is what the suggestions are built from. You can change it any time.
+        </p>
+      </Field>
+
+      <Field icon={MapPin} label="Trip name (optional)">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={legs.map((l) => l.city).join(' + ') || 'My trip'}
+          className="w-full rounded-2xl border-2 border-black/10 bg-white px-3 py-2.5 text-[14px] font-semibold text-ink outline-none focus:border-moss-dark"
+        />
+      </Field>
+
+      <Button size="lg" className="w-full" onClick={submit} disabled={legs.length === 0}>
+        {legs.length === 0 ? 'Add a city to continue' : `Create ${total}-day trip`}
+      </Button>
+    </div>
   )
 }
 
-export default function CreateTrip({ onNext, petEmotion, petMessage }: ScreenProps) {
-  const [budget, setBudget] = useState(tripMeta.budgetPerPerson)
-  const [created, setCreated] = useState(false)
-
+function Stepper({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <div className="mx-auto max-w-3xl">
-      <SectionLabel
-        eyebrow="Step 1 · Before the trip"
-        title="Create your Smart Trip Workspace"
-        subtitle="One dedicated page for destination, dates, travellers, budget, saved places, itinerary and expenses — instead of five different apps."
+    <span className="flex shrink-0 items-center gap-1 rounded-full bg-sage-light px-1 py-0.5">
+      <button
+        onClick={() => onChange(value - 1)}
+        aria-label="One day fewer"
+        className="h-6 w-6 rounded-full text-[15px] font-extrabold text-moss-dark transition hover:bg-white"
+      >
+        −
+      </button>
+      <input
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value.replace(/\D/g, '')) || 1)}
+        aria-label="Days in this city"
+        className="w-6 bg-transparent text-center text-[13px] font-extrabold text-ink outline-none"
       />
+      <button
+        onClick={() => onChange(value + 1)}
+        aria-label="One day more"
+        className="h-6 w-6 rounded-full text-[15px] font-extrabold text-moss-dark transition hover:bg-white"
+      >
+        +
+      </button>
+    </span>
+  )
+}
 
-      <MochiNote emotion={petEmotion} message={petMessage} />
-
-      <Card className="p-6 sm:p-8">
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wide text-ink-soft">
-              <MapPin size={13} /> Destination
-            </label>
-            <div className="flex items-center gap-2 rounded-2xl border-2 border-moss/30 bg-sage-light/40 px-4 py-3 font-bold text-ink">
-              <FlagCN /> {tripMeta.destination}
-            </div>
-          </div>
-          <div>
-            <label className="mb-1.5 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wide text-ink-soft">
-              <CalendarRange size={13} /> Travel dates
-            </label>
-            <div className="rounded-2xl border-2 border-moss/30 bg-sage-light/40 px-4 py-3 font-bold text-ink">
-              {tripMeta.dates}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <label className="mb-2 block text-xs font-extrabold uppercase tracking-wide text-ink-soft">Travellers (4)</label>
-          <div className="flex flex-wrap gap-2.5">
-            {travelers.map((t) => (
-              <div key={t.id} className="flex items-center gap-2 rounded-full border border-black/[0.06] bg-white py-1.5 pl-1.5 pr-3 shadow-soft">
-                <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-base"
-                  style={{ backgroundColor: `${t.color}55` }}
-                >
-                  {t.emoji}
-                </span>
-                <span className="text-sm font-bold text-ink">{t.name}</span>
-              </div>
-            ))}
-            <button className="flex items-center gap-1.5 rounded-full border-2 border-dashed border-black/15 px-3 py-1.5 text-sm font-bold text-ink-soft hover:border-moss-dark hover:text-moss-dark">
-              <Plus size={14} /> Invite
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <label className="mb-2 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wide text-ink-soft">
-            <Wallet size={13} /> Budget per person
-          </label>
-          <div className="flex items-center gap-4 rounded-2xl border-2 border-moss/30 bg-sage-light/40 px-5 py-4">
-            <input
-              type="range"
-              min={1000}
-              max={3000}
-              step={50}
-              value={budget}
-              onChange={(e) => setBudget(Number(e.target.value))}
-              className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-moss/30 accent-[#8ba863]"
-            />
-            <span className="w-28 shrink-0 text-right font-display text-xl font-extrabold text-moss-dark">
-              RM {budget.toLocaleString()}
-            </span>
-          </div>
-          <p className="mt-1.5 text-xs text-ink-soft">Drag to adjust — TripSync recalculates every plan &amp; recommendation live.</p>
-        </div>
-
-        <div className="mt-7 flex flex-wrap items-center gap-3">
-          {!created ? (
-            <Button size="lg" onClick={() => setCreated(true)}>
-              <Plus size={17} /> Create Trip
-            </Button>
-          ) : (
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-3">
-              <Pill tone="sage" className="py-1.5 text-sm">
-                <Check size={14} /> “Guangzhou 2026” workspace created
-              </Pill>
-              <Button size="lg" onClick={onNext}>
-                Next: Collect group preferences →
-              </Button>
-            </motion.div>
-          )}
-        </div>
-      </Card>
+function Field({
+  icon: Icon,
+  label,
+  required,
+  children,
+}: {
+  icon: typeof MapPin
+  label: string
+  required?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div className="mb-4">
+      <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-ink-soft">
+        <Icon size={12} /> {label}
+        {!required && <span className="font-bold normal-case tracking-normal opacity-70">· optional</span>}
+      </p>
+      {children}
     </div>
   )
 }

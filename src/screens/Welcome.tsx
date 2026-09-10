@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Sparkles, Users2, CloudSun, Heart } from 'lucide-react'
+import { Sparkles, Users2, CloudSun } from 'lucide-react'
 import { AppIcon } from '../components/AppIcon'
 import { Button, Card, Pill } from '../components/ui'
 import type { ScreenProps } from './types'
@@ -26,12 +26,11 @@ export default function Welcome({ onNext }: ScreenProps) {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <Button size="lg" onClick={onNext}>
-            <Sparkles size={17} /> Walk through the demo journey
+            <Sparkles size={17} /> Open my trips
           </Button>
         </div>
         <p className="text-xs font-semibold text-ink-soft">
-          Following <span className="text-moss-dark">“4 Friends Going to Guangzhou”</span> — a real example from our
-          product spec.
+          Plan · Today · Memories — three screens, and Mochi watches the rest.
         </p>
       </motion.div>
 
@@ -58,15 +57,6 @@ export default function Welcome({ onNext }: ScreenProps) {
           </motion.div>
         ))}
       </div>
-
-      <Card className="flex max-w-2xl items-center gap-3 px-5 py-4 text-left">
-        <Heart className="shrink-0 text-blush-dark" size={20} />
-        <p className="text-sm text-ink-soft">
-          <span className="font-bold text-ink">Design note —</span> colors follow the brand's pink/green palette
-          (<code className="rounded bg-black/5 px-1">#adc485 · #d6e7b9 · #fcf9e6 · #e7cbd7</code>) and Mochi's 6
-          reference emotions (happy, sad, angry, aggrieved, shy, scared) recur throughout the journey.
-        </p>
-      </Card>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Wallet, ArrowRight, CheckCircle2, Circle } from 'lucide-react'
-import { Button, Card, SectionLabel } from '../components/ui'
+import { Button, Card, SectionLabel , ScreenFooter } from '../components/ui'
 import { MochiNote } from '../components/MochiNote'
 import { expenses, travelers } from '../data/mockData'
 import type { ScreenProps } from './types'
@@ -37,7 +37,8 @@ function computeSettlements() {
   return { balance, settlements }
 }
 
-export default function Expenses({ onNext, petEmotion, petMessage }: ScreenProps) {
+export default function Expenses({
+  count = 4, onNext, petEmotion, petMessage }: ScreenProps & { count?: number }) {
   const { balance, settlements } = useMemo(() => computeSettlements(), [])
   const [settled, setSettled] = useState<number[]>([])
   const total = expenses.reduce((s, e) => s + e.amount, 0)
@@ -45,7 +46,6 @@ export default function Expenses({ onNext, petEmotion, petMessage }: ScreenProps
   return (
     <div className="mx-auto max-w-4xl">
       <SectionLabel
-        eyebrow="Step 9 · During the trip"
         title="Group Expense & Cost Splitting"
         subtitle="TripSync tracks who paid what and automatically figures out the smallest number of transfers to settle up — no more spreadsheets."
       />
@@ -81,7 +81,7 @@ export default function Expenses({ onNext, petEmotion, petMessage }: ScreenProps
           <Card className="p-5">
             <p className="mb-3 text-xs font-extrabold uppercase tracking-wide text-ink-soft">Net balance</p>
             <div className="space-y-2">
-              {travelers.map((t) => {
+              {travelers.slice(0, count).map((t) => {
                 const b = Math.round(balance.get(t.id) ?? 0)
                 return (
                   <div key={t.id} className="flex items-center justify-between text-sm">
@@ -127,11 +127,11 @@ export default function Expenses({ onNext, petEmotion, petMessage }: ScreenProps
         </div>
       </div>
 
-      <div className="mt-6 flex justify-end">
+      <ScreenFooter>
         <Button size="lg" onClick={onNext}>
           Next: Wrap up the trip →
         </Button>
-      </div>
+      </ScreenFooter>
     </div>
   )
 }

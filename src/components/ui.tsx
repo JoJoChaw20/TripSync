@@ -1,3 +1,4 @@
+import { createContext, useContext } from 'react'
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react'
 
 export function Button({
@@ -65,11 +66,20 @@ export function Pill({
 }
 
 export function SectionLabel({ eyebrow, title, subtitle }: { eyebrow?: string; title: string; subtitle?: string }) {
+  const embedded = useEmbedded()
   return (
-    <div className="mb-6">
-      {eyebrow && <p className="mb-1.5 text-xs font-extrabold uppercase tracking-[0.14em] text-moss-dark">{eyebrow}</p>}
-      <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">{title}</h2>
-      {subtitle && <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink-soft">{subtitle}</p>}
+    <div className={embedded ? 'mb-4' : 'mb-6'}>
+      {eyebrow && !embedded && (
+        <p className="mb-1.5 text-xs font-extrabold uppercase tracking-[0.14em] text-moss-dark">{eyebrow}</p>
+      )}
+      <h2 className={embedded ? 'text-lg font-extrabold text-ink' : 'text-2xl font-extrabold text-ink sm:text-3xl'}>
+        {title}
+      </h2>
+      {subtitle && (
+        <p className={`mt-2 max-w-2xl leading-relaxed text-ink-soft ${embedded ? 'text-[13px]' : 'text-[15px]'}`}>
+          {subtitle}
+        </p>
+      )}
     </div>
   )
 }
@@ -114,4 +124,17 @@ export function ProgressDots({ total, current }: { total: number; current: numbe
       ))}
     </div>
   )
+}
+
+/* ---------------------------------------------------------------
+ * Embedded context — screens rendered inside a Sheet hide their
+ * "Step N of 11" deck furniture and their trailing Next button.
+ * One provider in Sheet.tsx, so no screen needs to know about it.
+ * ------------------------------------------------------------- */
+export const EmbeddedContext = createContext(false)
+export const useEmbedded = () => useContext(EmbeddedContext)
+
+export function ScreenFooter({ children }: { children: ReactNode }) {
+  if (useEmbedded()) return null
+  return <div className="mt-6 flex justify-end">{children}</div>
 }

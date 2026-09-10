@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Lock, Unlock, Sparkles } from 'lucide-react'
-import { Button, Card, SectionLabel, Pill } from '../components/ui'
+import { Button, Card, SectionLabel, Pill , ScreenFooter } from '../components/ui'
 import { MochiNote } from '../components/MochiNote'
 import { travelers, allInterests } from '../data/mockData'
 import type { ScreenProps } from './types'
 
-export default function Preferences({ onNext, petEmotion, petMessage }: ScreenProps) {
+export default function Preferences({
+  count = 4, onNext, petEmotion, petMessage }: ScreenProps & { count?: number }) {
   const [revealed, setRevealed] = useState<string[]>([])
   const allRevealed = revealed.length === travelers.length
 
@@ -24,7 +25,6 @@ export default function Preferences({ onNext, petEmotion, petMessage }: ScreenPr
   return (
     <div className="mx-auto max-w-4xl">
       <SectionLabel
-        eyebrow="Step 2 · Before the trip"
         title="Group Preference Sync & Consensus Engine"
         subtitle="Each traveller privately submits interests, budget and priorities. Tap a friend to reveal their private input — TripSync's AI finds the overlap so nobody has to argue."
       />
@@ -32,7 +32,7 @@ export default function Preferences({ onNext, petEmotion, petMessage }: ScreenPr
       <MochiNote emotion={petEmotion} message={petMessage} />
 
       <div className="grid gap-4 sm:grid-cols-4">
-        {travelers.map((t) => {
+        {travelers.slice(0, count).map((t) => {
           const isOpen = revealed.includes(t.id)
           return (
             <button
@@ -113,11 +113,11 @@ export default function Preferences({ onNext, petEmotion, petMessage }: ScreenPr
         )}
       </Card>
 
-      <div className="mt-6 flex justify-end">
+      <ScreenFooter>
         <Button size="lg" onClick={onNext} disabled={!allRevealed}>
           Next: Discover places to save →
         </Button>
-      </div>
+      </ScreenFooter>
     </div>
   )
 }

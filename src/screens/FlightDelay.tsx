@@ -26,7 +26,6 @@ export default function FlightDelay({ onNext }: ScreenProps) {
   return (
     <div className="mx-auto max-w-3xl">
       <SectionLabel
-        eyebrow="Step 8 · During the trip"
         title="Unexpected Disruption — Flight Delay"
         subtitle="Not every disruption is weather. TripSync reacts the same way to flight delays, closures or transport issues — minimizing missed activities, extra cost, and backtracking."
       />

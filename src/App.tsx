@@ -1,149 +1,232 @@
-import { useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import {
-  Home,
-  MapPin,
-  Users,
-  Compass,
-  Wand2,
-  CalendarDays,
-  CloudRain,
-  RefreshCw,
-  PlaneTakeoff,
-  Wallet,
-  Star,
-  ArrowLeft,
-  ArrowRight,
-  RotateCcw,
-} from 'lucide-react'
-import { StepperNav, type JourneyStep } from './components/StepperNav'
-import { type PetEmotion } from './components/Pet'
-import { AppIcon } from './components/AppIcon'
-import { ProgressDots } from './components/ui'
+import { useCallback, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Eye } from 'lucide-react'
+import { BottomNav, type SurfaceId } from './components/BottomNav'
+import { TripBar } from './components/TripBar'
+import { Sheet } from './components/Sheet'
+import { SHEETS, type SheetId } from './navigation'
+import { activeTrip, places, trips as seedTrips, type Place, type TripSummary } from './data/mockData'
 
-import Welcome from './screens/Welcome'
-import CreateTrip from './screens/CreateTrip'
+import PlanSurface from './surfaces/PlanSurface'
+import TodaySurface from './surfaces/TodaySurface'
+import MemoriesSurface from './surfaces/MemoriesSurface'
+
 import Preferences from './screens/Preferences'
 import Discover from './screens/Discover'
 import AIPlans from './screens/AIPlans'
-import Itinerary from './screens/Itinerary'
-import WeatherAlert from './screens/WeatherAlert'
+import Expenses from './screens/Expenses'
 import Replanning from './screens/Replanning'
 import FlightDelay from './screens/FlightDelay'
-import Expenses from './screens/Expenses'
-import PostTrip from './screens/PostTrip'
+import ColorWalk from './screens/ColorWalk'
+import Welcome from './screens/Welcome'
+import CreateTrip from './screens/CreateTrip'
+import Trips from './screens/Trips'
+import Share from './screens/Share'
+import TripSettings from './screens/TripSettings'
 
-const steps: (JourneyStep & { petEmotion: PetEmotion; petMessage: string })[] = [
-  { id: 'welcome', title: 'Welcome to TripSync', short: 'Welcome', icon: Home, phase: 'Before', petEmotion: 'happy', petMessage: "Hi, I'm Mochi! I'll be your travel pet for this trip 🐰" },
-  { id: 'create', title: 'Create the Trip', short: 'Create Trip', icon: MapPin, phase: 'Before', petEmotion: 'happy', petMessage: "Guangzhou sounds fun! Let's set the basics." },
-  { id: 'preferences', title: 'Group Preference Sync', short: 'Preferences', icon: Users, phase: 'Before', petEmotion: 'shy', petMessage: "Everyone wants something different — let's find the overlap." },
-  { id: 'discover', title: 'Discover & Save Places', short: 'Discover', icon: Compass, phase: 'Before', petEmotion: 'happy', petMessage: 'Real travellers shared some hidden gems here!' },
-  { id: 'plans', title: 'AI Trip Generator', short: 'AI Plans', icon: Wand2, phase: 'Before', petEmotion: 'happy', petMessage: 'I made 3 versions of your trip — pick your favourite.' },
-  { id: 'itinerary', title: 'Final Itinerary', short: 'Itinerary', icon: CalendarDays, phase: 'Before', petEmotion: 'happy', petMessage: 'Everything is locked in one shared timeline. Bon voyage!' },
-  { id: 'weather', title: 'Live Trip — Weather Alert', short: 'Weather Alert', icon: CloudRain, phase: 'During', petEmotion: 'aggrieved', petMessage: 'Uh oh, I just checked the forecast for tomorrow...' },
-  { id: 'replanning', title: 'Preservation-First Replanning', short: 'Replanning', icon: RefreshCw, phase: 'During', petEmotion: 'shy', petMessage: 'I found a way to keep your original plan — just reordered!' },
-  { id: 'flight', title: 'Flight Delay Adaptation', short: 'Flight Delay', icon: PlaneTakeoff, phase: 'During', petEmotion: 'scared', petMessage: 'Your return flight just got delayed 5 hours!' },
-  { id: 'expenses', title: 'Group Expenses', short: 'Expenses', icon: Wallet, phase: 'During', petEmotion: 'neutral', petMessage: "Let's make sure everyone pays their fair share." },
-  { id: 'posttrip', title: 'Post-Trip Review', short: 'Post-Trip', icon: Star, phase: 'After', petEmotion: 'happy', petMessage: 'What a trip! Thanks for taking me along 💛' },
-]
+const params = new URLSearchParams(window.location.search)
+const READ_ONLY = params.get('view') === '1'
+const START_SURFACE: SurfaceId = params.get('demo') ? 'today' : 'plan'
+const START_TRIP = params.get('trip') ?? activeTrip.id
+// Onboarding is a one-time gate, not a tab. ?intro=1 replays it.
+const SHOW_INTRO = params.get('intro') === '1'
 
-const screenComponents = [Welcome, CreateTrip, Preferences, Discover, AIPlans, Itinerary, WeatherAlert, Replanning, FlightDelay, Expenses, PostTrip]
+/** Which saved places each generated plan brings in. */
+const PLAN_PLACES: Record<string, string[]> = {
+  saver: ['p2', 'p3', 'p5', 'p6', 'p8'],
+  balanced: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'],
+  comfort: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'],
+}
 
 function App() {
-  const [index, setIndex] = useState(0)
-  const [direction, setDirection] = useState(1)
+  const [intro, setIntro] = useState(SHOW_INTRO)
+  const [surface, setSurface] = useState<SurfaceId>(START_SURFACE)
+  const [sheet, setSheet] = useState<SheetId | null>(null)
+  const [repairApplied, setRepairApplied] = useState(false)
 
-  const step = steps[index]
-  const Screen = screenComponents[index]
+  const [tripList, setTripList] = useState<TripSummary[]>(seedTrips)
+  const [tripId, setTripId] = useState(START_TRIP)
+  const [ownPlaces, setOwnPlaces] = useState<Place[]>([])
+  // Which places are on which trip. Guangzhou starts with everything seeded.
+  const [savedByTrip, setSavedByTrip] = useState<Record<string, string[]>>({
+    gz2026: places.map((p) => p.id),
+  })
 
-  const phaseColor = useMemo(() => {
-    if (step.phase === 'Before') return 'sage'
-    if (step.phase === 'During') return 'blush'
-    return 'sun'
-  }, [step.phase])
+  const closeSheet = useCallback(() => setSheet(null), [])
+  const meta = sheet ? SHEETS[sheet] : null
 
-  function goTo(i: number) {
-    if (i < 0 || i >= steps.length) return
-    setDirection(i > index ? 1 : -1)
-    setIndex(i)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const trip = tripList.find((t) => t.id === tripId) ?? tripList[0]
+  const cities = trip.legs.map((l) => l.city)
+  const savedIds = savedByTrip[trip.id] ?? []
+  const pool = useMemo(() => [...ownPlaces, ...places], [ownPlaces])
+  const savedPlaces = useMemo(
+    () => savedIds.map((id) => pool.find((p) => p.id === id)).filter(Boolean) as Place[],
+    [savedIds, pool],
+  )
+
+  const nextUp = useMemo(() => {
+    if (trip.status !== 'live') return trip.highlight
+    return repairApplied ? 'Next · 14:30 Tianhe Mall' : 'Next · 14:00 Liwan Lake Park'
+  }, [trip, repairApplied])
+
+  function toggleSave(id: string) {
+    setSavedByTrip((m) => {
+      const cur = m[trip.id] ?? []
+      return { ...m, [trip.id]: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] }
+    })
+  }
+
+  function addPlace(place: Place) {
+    setOwnPlaces((a) => [place, ...a])
+    setSavedByTrip((m) => ({ ...m, [trip.id]: [place.id, ...(m[trip.id] ?? [])] }))
+  }
+
+  function updateTrip(patch: Partial<TripSummary>) {
+    setTripList((l) => l.map((t) => (t.id === trip.id ? { ...t, ...patch } : t)))
+  }
+
+  function importPlan(planId: string) {
+    // Only import places that are actually in a city on this trip.
+    const ids = (PLAN_PLACES[planId] ?? []).filter((id) =>
+      cities.some((c) => c.toLowerCase() === (places.find((p) => p.id === id)?.city ?? '').toLowerCase()),
+    )
+    setSavedByTrip((m) => ({ ...m, [trip.id]: ids }))
+  }
+
+  function createTrip(t: TripSummary) {
+    setTripList((l) => [l[0], t, ...l.slice(1)])
+    setSavedByTrip((m) => ({ ...m, [t.id]: [] }))
+    setTripId(t.id)
+    setSurface('plan')
+    setSheet('places')
+  }
+
+  // Screens written for the old linear tour still expect these props.
+  const screenProps = {
+    onNext: closeSheet,
+    onJump: closeSheet,
+    petEmotion: meta?.pet ?? ('happy' as const),
+    petMessage: meta?.petMessage ?? '',
+  }
+
+  if (intro) {
+    return (
+      <div className="min-h-screen bg-cream">
+        <div className="mx-auto w-full max-w-[440px] px-4 py-6">
+          <Welcome {...screenProps} onNext={() => setIntro(false)} />
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-cream">
-      {/* decorative background blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-sage/40 blur-3xl" />
         <div className="absolute -right-24 top-40 h-80 w-80 rounded-full bg-blush/30 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-sun/15 blur-3xl" />
       </div>
 
-      <header className="sticky top-0 z-30 border-b border-black/[0.05] bg-cream/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2">
-            <AppIcon size={34} />
-            <p className="font-display text-lg font-extrabold text-ink">TripSync</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`hidden rounded-full px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide sm:inline-block ${
-                phaseColor === 'sage' ? 'bg-sage-light text-moss-dark' : phaseColor === 'blush' ? 'bg-blush/60 text-[#9c5a72]' : 'bg-sun/25 text-[#9c6a12]'
-              }`}
-            >
-              {step.phase} the trip
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[440px] flex-col border-black/[0.06] bg-cream/60 sm:border-x">
+        {READ_ONLY && (
+          <div className="flex shrink-0 items-center justify-center gap-2 bg-sky/25 py-1.5 text-[11px] font-extrabold text-[#3d6d7c]">
+            <span className="flex items-center gap-1.5">
+              <Eye size={12} /> Shared with you · view only
             </span>
             <button
-              onClick={() => goTo(0)}
-              className="flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-xs font-bold text-ink-soft hover:border-moss-dark hover:text-moss-dark"
+              onClick={() => {
+                window.location.href = window.location.pathname
+              }}
+              className="rounded-full bg-white/70 px-2.5 py-0.5 font-extrabold text-[#3d6d7c] transition hover:bg-white"
             >
-              <RotateCcw size={13} /> Restart
+              Open my trips
             </button>
           </div>
-        </div>
-        <div className="mx-auto max-w-6xl px-4 pb-3 sm:px-6">
-          <StepperNav steps={steps} current={index} onJump={goTo} />
-        </div>
-      </header>
+        )}
 
-      <main className="relative mx-auto max-w-6xl px-4 pb-40 pt-8 sm:px-6">
-        <AnimatePresence mode="wait" custom={direction}>
+        <TripBar
+          trip={trip}
+          tripCount={tripList.length}
+          nextUp={nextUp}
+          onOpenTrips={() => setSheet('trips')}
+          onOpenBudget={() => setSheet('settings')}
+        />
+
+        <main className="flex-1 px-4 pb-6 pt-4">
+          {/* No AnimatePresence here: a bottom-nav tap should feel instant,
+              and mode="wait" would block the new surface behind an exit. */}
           <motion.div
-            key={step.id}
-            custom={direction}
-            initial={{ opacity: 0, x: direction * 24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -24 }}
-            transition={{ duration: 0.28, ease: 'easeOut' }}
+            key={surface + trip.id}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.18 }}
           >
-            <Screen onNext={() => goTo(index + 1)} onJump={goTo} petEmotion={step.petEmotion} petMessage={step.petMessage} />
+            {surface === 'plan' && (
+              <PlanSurface trip={trip} savedPlaces={savedPlaces} readOnly={READ_ONLY} onOpenSheet={setSheet} />
+            )}
+            {surface === 'today' && (
+              <TodaySurface tripId={trip.id} onOpenSheet={setSheet} repairApplied={repairApplied} />
+            )}
+            {surface === 'memories' && (
+              <MemoriesSurface
+                trip={trip}
+                trips={tripList}
+                onOpenTrip={(id) => setTripId(id)}
+                onOpenSheet={setSheet}
+              />
+            )}
           </motion.div>
-        </AnimatePresence>
-      </main>
+        </main>
 
-      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-cream/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <button
-            onClick={() => goTo(index - 1)}
-            disabled={index === 0}
-            className="flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-2 text-sm font-bold text-ink-soft transition hover:border-moss-dark hover:text-moss-dark disabled:opacity-30"
-          >
-            <ArrowLeft size={15} /> <span className="hidden sm:inline">Back</span>
-          </button>
-          <div className="flex flex-col items-center gap-1">
-            <ProgressDots total={steps.length} current={index} />
-            <p className="text-[11px] font-bold text-ink-soft">
-              Step {index + 1} of {steps.length} · {step.title}
-            </p>
-          </div>
-          <button
-            onClick={() => goTo(index + 1)}
-            disabled={index === steps.length - 1}
-            className="flex items-center gap-1.5 rounded-full bg-moss-dark px-4 py-2 text-sm font-bold text-white shadow-soft transition hover:brightness-105 disabled:opacity-30"
-          >
-            <span className="hidden sm:inline">Next</span> <ArrowRight size={15} />
-          </button>
-        </div>
-      </footer>
+        <BottomNav
+          current={surface}
+          onChange={setSurface}
+          badge={!repairApplied && trip.status === 'live' && surface !== 'today' ? 'today' : null}
+        />
+      </div>
+
+      <Sheet open={sheet !== null} title={meta?.title ?? ''} subtitle={meta?.subtitle} onClose={closeSheet}>
+        {sheet === 'trips' && (
+          <Trips
+            currentId={trip.id}
+            trips={tripList}
+            readOnly={READ_ONLY}
+            onOpen={(id) => {
+              setTripId(id)
+              setSurface('plan')
+              closeSheet()
+            }}
+            onNewTrip={() => setSheet('newtrip')}
+          />
+        )}
+        {sheet === 'newtrip' && <CreateTrip onCreate={createTrip} />}
+        {sheet === 'share' && <Share trip={trip} />}
+        {sheet === 'settings' && <TripSettings trip={trip} onSave={updateTrip} onClose={closeSheet} />}
+        {sheet === 'group' && <Preferences {...screenProps} count={trip.travelerCount} />}
+        {sheet === 'places' && (
+          <Discover
+            {...screenProps}
+            savedIds={savedIds}
+            cities={cities}
+            extraPlaces={ownPlaces}
+            onToggleSave={toggleSave}
+            onAddPlace={addPlace}
+            readOnly={READ_ONLY}
+          />
+        )}
+        {sheet === 'suggestions' && <AIPlans {...screenProps} onImport={importPlan} notes={trip.notes} />}
+        {sheet === 'budget' && <Expenses {...screenProps} count={trip.travelerCount} />}
+        {sheet === 'flight' && <FlightDelay {...screenProps} />}
+        {sheet === 'game' && <ColorWalk onDone={closeSheet} count={trip.travelerCount} />}
+        {sheet === 'repair' && (
+          <Replanning
+            {...screenProps}
+            onNext={() => {
+              setRepairApplied(true)
+              closeSheet()
+            }}
+          />
+        )}
+      </Sheet>
     </div>
   )
 }

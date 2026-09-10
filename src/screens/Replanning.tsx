@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, ListChecks, Shuffle, Target, ArrowRight, Star, MapPinned } from 'lucide-react'
+import { Search, ListChecks, Shuffle, Target, ArrowRight, Star, MapPinned, Check } from 'lucide-react'
 import { Button, Card, SectionLabel, Pill } from '../components/ui'
 import { Pet } from '../components/Pet'
 import { placeById } from '../data/mockData'
@@ -30,7 +30,6 @@ export default function Replanning({ onNext }: ScreenProps) {
   return (
     <div className="mx-auto max-w-5xl">
       <SectionLabel
-        eyebrow="Step 7 · During the trip — the core engine"
         title="Preservation-First AI Replanning"
         subtitle="Instead of jumping straight to a new recommendation, TripSync checks whether your own saved places can absorb the disruption first."
       />
@@ -123,10 +122,13 @@ export default function Replanning({ onNext }: ScreenProps) {
         )}
       </AnimatePresence>
 
-      <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex flex-col gap-2">
         <Button size="lg" onClick={onNext}>
-          Next: An unexpected flight delay →
+          <Check size={16} /> Apply this plan — nothing lost
         </Button>
+        <p className="text-center text-[11px] font-semibold text-ink-soft">
+          Or keep the original. Mochi never changes your trip without asking.
+        </p>
       </div>
     </div>
   )
