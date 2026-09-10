@@ -29,7 +29,17 @@ Group trips are planned once, on a spreadsheet or a shared doc, and then left to
 
 **Stakeholders:** groups of friends/family travelling together, budget-conscious travellers who need fair cost-splitting, and trip organizers who currently absorb all the replanning effort themselves.
 
+**Reach & scalability:** the demo trip is a 4-person Guangzhou itinerary, but nothing about the mechanism is specific to that group size or destination. The same Preservation-First engine, scoring model, and expense-splitting apply to a 2-person weekend trip or a 20-person school/corporate trip alike, since both are just "a set of saved places against a shared calendar and budget." Beyond bigger groups, the same building blocks extend to corporate travel coordination and study-tour/school-trip planning, where the "someone always ends up replanning by hand" problem is the same one, just with a different group label.
+
 **Existing apps and where they fall short:** apps like *Wanderlog* and *TripIt* are good at consolidating bookings and building a shareable itinerary, but they treat the itinerary as a static document: if a day gets disrupted, the user still has to manually find replacements and re-slot them. None of them close the loop with automatic, preference-aware re-optimization, in-app expense settlement, and group-preference balancing in one workspace.
+
+| | Wanderlog / TripIt | TripSync |
+| --- | --- | --- |
+| Itinerary after a disruption | Stays broken until a human manually fixes it | Preservation-First engine re-slots your own saved places automatically |
+| Recommendations | Generic listings/reviews | AI picks + notes from real travellers who've actually been |
+| Group fit | One itinerary, no per-person scoring | Plans scored per traveller (budget fit, preference match, group satisfaction, etc.) |
+| Expense splitting | Separate app or spreadsheet | Built into the same workspace, with automatic settle-up |
+| Cost to view | Often needs an account/app install | Read-only link, no account needed |
 
 ### Our Solution
 
@@ -47,6 +57,24 @@ TripSync is a collaborative trip-planning workspace that generates AI-scored iti
 - **Accountless sharing** — a trip link opens read-only for anyone, edit access stays with invited members, no sign-up wall for viewers.
 - **Post-trip retrospective** — actual spend vs. budget, ratings, shared memories, and a learned preference profile that TripSync carries into the next trip.
 - **Mochi**, the trip pet, gives lightweight emotional feedback (happy/sad/angry/aggrieved/shy/scared) throughout the flow instead of dry system notifications.
+
+### In practice: two disruptions, zero lost plans
+
+**Rain on Day 2.** The forecast flags heavy rain at 3 PM, right when Liwan Lake Park (outdoor) was scheduled.
+
+| | Before | After |
+| --- | --- | --- |
+| Day 2 (Wed) | Chen Clan Ancestral Hall → **Liwan Lake Park** → Ah Po's Noodle House | Chen Clan Ancestral Hall → **Tianhe Sportcenter Mall** (indoor, already saved for Day 4) → Ah Po's Noodle House |
+| Day 4 (Fri) | Tianhe Sportcenter Mall → Yuexiu Night Market | **Liwan Lake Park** (moved here, sunny) → Yuexiu Night Market |
+
+Nothing was dropped and nothing new was suggested: Day 2 and Day 4 simply swapped one saved activity each, so every place the group picked still gets visited.
+
+**A 5-hour flight delay on Day 6.** Flight CZ3456 (CAN → KUL) slips from 18:00 to 23:00.
+
+- **Before:** 10:00 hotel checkout, 12:00 souvenirs at Canton Tower, 15:00 head to the airport, 18:00 flight departs.
+- **After:** 10:00 hotel checkout, 12:00 souvenirs at Canton Tower, 18:30 🍜 bonus round at Ah Po's Noodle House, 20:00 head to the airport, 23:00 flight departs (delayed).
+
+Result: zero missed activities, zero extra cost, and one bonus meal squeezed into the time the delay freed up.
 
 ---
 
@@ -82,11 +110,14 @@ TripSync is a collaborative trip-planning workspace that generates AI-scored iti
 
 ## 3. Design & Prototype
 
-**UI Prototype:** _[Public Link, TODO, verify it opens in an incognito window]_
+**UI Prototype:** _[Public Link, TODO, verify it opens in an incognito window]_, or try the [live demo](https://trip-sync-blue.vercel.app) directly.
 
-<!-- TODO: embed/link 4-8 key screens with a caption per screen. Candidates from the current build:
-     Welcome, CreateTrip, Preferences, AIPlans, Discover, Replanning, FlightDelay,
-     Expenses, Share, PostTrip; see src/screens/ for the full set. -->
+| | |
+| --- | --- |
+| ![Welcome screen introducing Mochi and TripSync's tagline](docs/screenshots/01-welcome.png) **Welcome.** Mochi and the pitch, in one screen: plan together, let it adapt when life happens. | ![Discover screen with AI and traveller-recommended places for Guangzhou](docs/screenshots/02-discover.png) **Discover.** AI picks and real-traveller recommendations side by side, filterable, saved straight into the trip. |
+| ![AI Trip Generator showing the Budget Saver plan scored across six dimensions](docs/screenshots/03-ai-plans.png) **AI-scored plans.** Three itinerary options, each transparently scored on budget fit, group satisfaction, preference match, and more. | ![Preservation-First replanning screen walking through the four-step process](docs/screenshots/04-replanning.png) **Preservation-First replanning.** Rain is detected, an outdoor activity is identified, and saved places are rearranged before anything new is suggested. |
+| ![Flight delay screen showing the original 18:00 departure pushed to 23:00](docs/screenshots/05-flight-delay.png) **Flight delay auto-reflow.** A 5-hour delay becomes a bonus noodle run instead of a scramble at the gate. | ![Colour Walk mini-game assigning each traveller a colour](docs/screenshots/06-colour-walk.png) **Colour Walk.** The disruption's free two hours become a group photo scavenger hunt, with a shape-based mode for colour-blind travellers. |
+| ![Group expense list with per-person totals and net balance](docs/screenshots/07-expenses.png) **Expense tracking.** Every shared cost logged, with the minimal set of settle-up transfers computed automatically. | ![Post-trip retrospective for the Penang Weekend trip showing spend, rating, and memories](docs/screenshots/08-post-trip.png) **Post-trip retrospective.** Actual spend vs. budget, a rating, shared memories, and a profile TripSync carries into the next trip. |
 
 ---
 
@@ -98,7 +129,7 @@ TripSync is a collaborative trip-planning workspace that generates AI-scored iti
 - **The trip keeps learning.** The post-trip retrospective feeds a learned preference profile forward into future trips, instead of every trip starting from a blank slate.
 - **Zero-friction sharing.** Anyone with the link can view the live trip with no account; only invited collaborators can edit.
 
-<!-- TODO: optional comparison table vs. Wanderlog/TripIt if you want to make this explicit. -->
+*(See the comparison table in section 1 for how this stacks up against Wanderlog/TripIt feature-by-feature.)*
 
 ---
 
