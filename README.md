@@ -1,10 +1,13 @@
-# TripSync
+# TripSync by Three Little Bugs
 
-**by Three Little Bugs** — Cheong Li Hua, Yap Zhe Cheng, Chaw Yen Hua
+**Team:** Cheong Li Hua, Yap Zhe Cheng, Chaw Yen Hua
 
 **Problem Statement:** Travel Planner
+
 **Video Presentation:** _[Unlisted YouTube Link — TODO]_
+
 **Presentation Slides:** _[Public Link — TODO]_
+
 **Live demo:** https://trip-sync-blue.vercel.app
 
 > A collaborative travel workspace — AI-optimized itineraries, recommendations from real travellers, and a **Preservation-First replanning engine** that adapts your trip when the weather (or the world) doesn't cooperate.
