@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Clock, Plus, Share2, Users, Wand2 } from 'lucide-react'
+import { motion, Reorder, useDragControls } from 'framer-motion'
+import { AlertTriangle, Clock, GripVertical, Plus, Share2, Trash2, Users, Wand2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Card } from '../components/ui'
 import { Pet } from '../components/Pet'
-import { originalItinerary, travelers, type Place, type TripSummary } from '../data/mockData'
+import { travelers, type Place, type TripSummary } from '../data/mockData'
+import { buildPlan, dayMeta, fromMin } from '../engine/buildPlan'
+import { missingMeals } from '../engine/meals'
+import { retimeDay, type RetimeWarning } from '../engine/replan'
+import TripGrid from '../components/TripGrid'
+import type { PlanDay } from '../engine/types'
 import type { SheetId } from '../navigation'
-
-const SLOTS = ['09:30', '12:30', '15:00', '19:00']
 
 /**
  * Plan is the itinerary. Preferences, discovery and sharing are drawers
@@ -16,54 +19,66 @@ const SLOTS = ['09:30', '12:30', '15:00', '19:00']
 export default function PlanSurface({
   trip,
   savedPlaces,
+  repairedPlan,
+  pinned = {},
+  preferAt = {},
+  onMovePlace,
+  onAddToDay,
+  allPlaces,
+  onRemovePlace,
   readOnly,
+  onPlanChange,
   onOpenSheet,
 }: {
   trip: TripSummary
   savedPlaces: Place[]
+  repairedPlan?: PlanDay[] | null
+  pinned?: Record<string, number>
+  preferAt?: Record<string, number>
+  onMovePlace: (id: string, day: number) => void
+  onAddToDay: (id: string, day: number, at?: number) => void
+  allPlaces: Place[]
+  onRemovePlace: (id: string) => void
   readOnly: boolean
-  onOpenSheet: (id: SheetId) => void
+  onPlanChange: (plan: PlanDay[]) => void
+  onOpenSheet: (id: SheetId, day?: number) => void
 }) {
   const [activeDay, setActiveDay] = useState(trip.status === 'live' ? 1 : 0)
+  const [view, setView] = useState<'day' | 'trip'>('day')
+  const [warnings, setWarnings] = useState<RetimeWarning[]>([])
 
-  // Which city each day belongs to, straight from the legs.
   const cityForDay: string[] = []
   trip.legs.forEach((leg) => {
     for (let i = 0; i < leg.days; i++) cityForDay.push(leg.city)
   })
   const multiCity = trip.legs.length > 1
-  const seeded = trip.id === 'gz2026'
+  const byId = (id: string) => savedPlaces.find((p) => p.id === id)
 
-  // Guangzhou keeps its hand-built days; anything the user adds later is
-  // slotted into a day in ITS OWN city, never dumped on the next free day.
-  const base = Array.from({ length: Math.max(1, trip.days) }, (_, i) => {
-    const hand = seeded ? originalItinerary[i] : undefined
-    return {
-      label: hand?.label ?? `Day ${i + 1}`,
-      chip: hand?.date ?? `Day ${i + 1}`,
-      items: (hand?.items ?? []).map((it) => ({ time: it.time, placeId: it.placeId, note: it.note })),
-    }
-  })
+  // Anything newly saved lands on the day the "Add to Day N" button promised,
+  // and stays there.
+  const built = buildPlan(trip, savedPlaces, pinned, repairedPlan, preferAt)
+  const planDays = built.days
+  const unplaced = built.unplaced
 
-  const alreadyPlaced = new Set(base.flatMap((d) => d.items.map((it) => it.placeId)))
-
-  trip.legs.forEach((leg) => {
-    const dayIdx = cityForDay.map((c, i) => (c === leg.city ? i : -1)).filter((i) => i >= 0)
-    if (dayIdx.length === 0) return
-    const loose = savedPlaces.filter((pl) => pl.city === leg.city && !alreadyPlaced.has(pl.id))
-    loose.forEach((pl, n) => {
-      const target = base[dayIdx[n % dayIdx.length]]
-      target.items.push({ time: SLOTS[target.items.length % SLOTS.length], placeId: pl.id, note: undefined })
-    })
-  })
-
-  const days = base.map((d) => ({
-    ...d,
-    items: [...d.items].sort((a, b) => a.time.localeCompare(b.time)),
+  const days = planDays.map((d, i) => ({
+    ...dayMeta(trip, i),
+    stay: d.stay,
+    dayNote: d.note,
+    endNote: d.endNote,
+    earliest: d.earliest,
+    latest: d.latest,
+    items: d.items.map((it) => ({ time: fromMin(it.startMin), placeId: it.placeId, note: it.note })),
   }))
 
-  const day = days[Math.min(activeDay, days.length - 1)]
-  const byId = (id: string) => savedPlaces.find((p) => p.id === id)
+  const dayIndex = Math.min(activeDay, days.length - 1)
+  const day = days[dayIndex]
+
+  /** Dragging sets the order; the engine sets the clock. */
+  function reorder(ids: string[]) {
+    const { items, warnings: warn } = retimeDay(ids, byId)
+    setWarnings(warn)
+    onPlanChange(planDays.map((d, i) => (i === dayIndex ? { ...d, items } : d)))
+  }
 
   if (trip.status === 'past') {
     return (
@@ -77,7 +92,7 @@ export default function PlanSurface({
     )
   }
 
-  if (!seeded && savedPlaces.length === 0) {
+  if (trip.id !== 'gz2026' && savedPlaces.length === 0) {
     return (
       <Empty
         cover={trip.cover}
@@ -85,7 +100,11 @@ export default function PlanSurface({
         body={`${trip.days} days in ${trip.destination.split(',')[0]}, nothing scheduled yet. Start by saving a few places.`}
         cta={readOnly ? 'Back to my trips' : 'Add places'}
         onClick={() => onOpenSheet(readOnly ? 'trips' : 'places')}
-        secondary={readOnly ? undefined : { label: 'Or get ideas from Mochi', onClick: () => onOpenSheet('suggestions') }}
+        secondary={
+          readOnly
+            ? undefined
+            : { label: 'Already planned elsewhere? Paste your list', onClick: () => onOpenSheet('import') }
+        }
       />
     )
   }
@@ -93,7 +112,23 @@ export default function PlanSurface({
   return (
     <div className="pb-2">
       <div className="mb-3 flex items-center justify-between">
-        <h1 className="font-display text-xl font-extrabold text-ink">Your plan</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-display text-xl font-extrabold text-ink">Your plan</h1>
+          {/* whole-trip view: see the shape, the way a spreadsheet lets you */}
+          <span className="flex rounded-full bg-black/[0.05] p-0.5">
+            {(['day', 'trip'] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold capitalize transition ${
+                  view === v ? 'bg-white text-moss-dark shadow-soft' : 'text-ink-soft'
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </span>
+        </div>
         <div className="flex -space-x-1.5">
           {travelers.slice(0, trip.travelerCount).map((t) => (
             <button
@@ -109,13 +144,42 @@ export default function PlanSurface({
         </div>
       </div>
 
+      {!readOnly && !trip.legs.some((l) => l.stay) && (
+        <button
+          onClick={() => onOpenSheet('settings')}
+          className="mb-3 flex w-full items-center gap-2 rounded-2xl border border-blush-dark/40 bg-blush/25 px-3 py-2 text-left"
+        >
+          <span className="text-base">🛏</span>
+          <span className="min-w-0 flex-1 text-[12px] font-bold leading-snug text-[#9c5a72]">
+            Booked somewhere to stay? Add it and your days will start from the right place.
+          </span>
+        </button>
+      )}
+
       <div className="mb-3 grid grid-cols-4 gap-2">
-        <QuickChip icon={Plus} label="Add place" disabled={readOnly} onClick={() => onOpenSheet('places')} />
+        <QuickChip
+          icon={Plus}
+          label="Add place"
+          disabled={readOnly}
+          onClick={() => onOpenSheet('places', dayIndex + 1)}
+        />
         <QuickChip icon={Wand2} label="Ideas" disabled={readOnly} onClick={() => onOpenSheet('suggestions')} />
         <QuickChip icon={Users} label="Group" onClick={() => onOpenSheet('group')} />
         <QuickChip icon={Share2} label="Share" onClick={() => onOpenSheet('share')} />
       </div>
 
+      {view === 'trip' ? (
+        <TripGrid
+          trip={trip}
+          days={planDays}
+          places={savedPlaces}
+          onOpenDay={(i) => {
+            setActiveDay(i)
+            setView('day')
+          }}
+        />
+      ) : (
+      <>
       {/* Every day fits the viewport — a sliced scroll row reads as broken. */}
       <div className={`mb-4 grid gap-1.5 ${days.length > 6 ? 'grid-cols-7' : days.length > 5 ? 'grid-cols-6' : 'grid-cols-5'}`}>
         {days.map((d, i) => (
@@ -148,57 +212,124 @@ export default function PlanSurface({
             )}
           </p>
 
-          {day.items.length === 0 ? (
-            <p className="py-4 text-center text-[13px] font-semibold text-ink-soft">Nothing on this day yet.</p>
-          ) : (
-            <div className="relative space-y-3.5 pl-5">
-              <div className="absolute bottom-2 left-[8px] top-2 w-0.5 bg-sage" />
-              {day.items.map((item, idx) => {
-                const place = byId(item.placeId)
-                if (!place) return null
-                return (
-                  <div key={`${item.placeId}-${idx}`} className="relative">
-                    <span
-                      className="absolute -left-5 top-2 rounded-full border-2 border-moss-dark bg-white"
-                      style={{ width: 16, height: 16 }}
-                    />
-                    <div className="flex items-start gap-2.5 rounded-2xl bg-sage-light/40 p-2.5">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-lg shadow-soft">
-                        {place.image}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <span className="flex items-center gap-1 text-[11px] font-extrabold text-moss-dark">
-                          <Clock size={10} /> {item.time}
-                        </span>
-                        <p className="text-[14px] font-bold leading-tight text-ink">{place.name}</p>
-                        {item.note && <p className="mt-0.5 text-[11px] text-ink-soft">{item.note}</p>}
-                      </div>
-                      {place.recommender?.name === 'You' ? (
-                        <span className="shrink-0 rounded-full bg-sun/40 px-2 py-0.5 text-[9px] font-extrabold text-[#9c6a12]">
-                          Yours
-                        </span>
-                      ) : place.source === 'traveller' ? (
-                        <span className="shrink-0 rounded-full bg-blush/60 px-2 py-0.5 text-[9px] font-extrabold text-[#9c5a72]">
-                          Local pick
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                )
-              })}
+          {(day.dayNote || day.endNote || day.stay) && (
+            <div className="mb-2.5 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+              {day.dayNote && (
+                <span className="rounded-full bg-sky/25 px-2 py-0.5 text-[#3d6d7c]">
+                  {day.dayNote} {fromMin(day.earliest ?? 480)}
+                </span>
+              )}
+              {day.endNote && (
+                <span className="rounded-full bg-sun/30 px-2 py-0.5 text-[#9c6a12]">
+                  {day.endNote} {fromMin(day.latest ?? 1200)}
+                </span>
+              )}
+              {day.stay && (
+                <span className="rounded-full bg-blush/50 px-2 py-0.5 text-[#9c5a72]">🛏 {day.stay.name}</span>
+              )}
             </div>
           )}
 
+          {day.items.length === 0 ? (
+            <p className="py-4 text-center text-[13px] font-semibold text-ink-soft">Nothing on this day yet.</p>
+          ) : (
+            <Reorder.Group
+              axis="y"
+              values={day.items.map((i) => i.placeId)}
+              onReorder={reorder}
+              className="relative flex list-none flex-col gap-3.5 pl-5"
+            >
+              <div className="absolute bottom-2 left-[8px] top-2 w-0.5 bg-sage" />
+              {day.items.map((item) => {
+                const place = byId(item.placeId)
+                if (!place) return null
+                const warning = warnings.find((w) => w.placeId === item.placeId)
+                return (
+                  <StopRow
+                    key={item.placeId}
+                    id={item.placeId}
+                    time={item.time}
+                    note={item.note}
+                    place={place}
+                    warning={warning?.message}
+                    draggable={!readOnly}
+                    dayCount={days.length}
+                    currentDay={dayIndex + 1}
+                    onMove={(d) => onMovePlace(item.placeId, d)}
+                    onRemove={() => onRemovePlace(item.placeId)}
+                  />
+                )
+              })}
+            </Reorder.Group>
+          )}
+
+          {warnings.length > 0 && (
+            <p className="mt-2 flex items-start gap-1.5 rounded-2xl bg-coral/10 px-2.5 py-2 text-[11px] font-semibold leading-snug text-[#a8452a]">
+              <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+              {warnings[0].message}
+            </p>
+          )}
+
+          {!readOnly && day.items.length > 1 && (
+            <p className="mt-2 text-center text-[10px] font-bold text-ink-soft">
+              Drag a stop to reorder — times re-flow around opening hours.
+            </p>
+          )}
+
+          {!readOnly &&
+            missingMeals(planDays[dayIndex], allPlaces, byId).map((m) => (
+              <div key={m.meal} className="mt-2 rounded-2xl bg-sun/15 px-2.5 py-2">
+                <p className="text-[11px] font-extrabold text-[#9c6a12]">
+                  No {m.label.toLowerCase()} planned · {fromMin(m.from)}–{fromMin(m.to)}
+                </p>
+                {m.suggestions.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {m.suggestions.map((sug) => (
+                      <button
+                        key={sug.id}
+                        onClick={() => onAddToDay(sug.id, dayIndex + 1, m.from)}
+                        className="flex max-w-full items-center gap-1 truncate rounded-full bg-white px-2 py-1 text-[11px] font-bold text-ink shadow-soft transition hover:brightness-95"
+                      >
+                        {sug.image} {sug.name}
+                        <span className="shrink-0 text-[10px] font-extrabold text-moss-dark">+</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
           {!readOnly && (
             <button
-              onClick={() => onOpenSheet('places')}
+              onClick={() => onOpenSheet('places', dayIndex + 1)}
               className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-moss-dark/40 py-2.5 text-[13px] font-bold text-moss-dark transition hover:bg-sage-light/50"
             >
-              <Plus size={14} /> Add to Day {activeDay + 1}
+              <Plus size={14} /> Add to Day {dayIndex + 1}
             </button>
           )}
         </Card>
       </motion.div>
+
+      </>
+      )}
+
+      {unplaced.length > 0 && (
+        <Card className="mt-3 border-sun/50 p-3">
+          <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-[#9c6a12]">
+            Not scheduled yet · {unplaced.length}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {unplaced.map((pl) => (
+              <span key={pl.id} className="rounded-full bg-sun/20 px-2.5 py-1 text-[11px] font-bold text-[#9c6a12]">
+                {pl.image} {pl.name}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] leading-snug text-ink-soft">
+            No day has room within their opening hours. Add a day, or drop something.
+          </p>
+        </Card>
+      )}
 
       {!readOnly && (
         <button
@@ -273,5 +404,125 @@ function QuickChip({
       <Icon size={15} className="text-moss-dark" />
       <span className="w-full truncate text-center">{label}</span>
     </button>
+  )
+}
+
+/** One draggable stop. The handle is explicit so a tap still scrolls the page. */
+function StopRow({
+  id,
+  time,
+  note,
+  place,
+  warning,
+  draggable,
+  dayCount,
+  currentDay,
+  onMove,
+  onRemove,
+}: {
+  id: string
+  time: string
+  note?: string
+  place: Place
+  warning?: string
+  draggable: boolean
+  dayCount: number
+  currentDay: number
+  onMove: (day: number) => void
+  onRemove: () => void
+}) {
+  const controls = useDragControls()
+  const [open, setOpen] = useState(false)
+  return (
+    <Reorder.Item
+      value={id}
+      dragListener={false}
+      dragControls={controls}
+      className="relative list-none"
+      whileDrag={{ scale: 1.03, zIndex: 20 }}
+    >
+      <span
+        className={`absolute -left-5 top-2 rounded-full border-2 bg-white ${
+          warning ? 'border-coral' : 'border-moss-dark'
+        }`}
+        style={{ width: 16, height: 16 }}
+      />
+      <div
+        className={`flex items-start gap-2.5 rounded-2xl p-2.5 ${
+          warning ? 'bg-coral/10' : 'bg-sage-light/40'
+        }`}
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-lg shadow-soft">
+          {place.image}
+        </span>
+        <button
+          onClick={() => draggable && setOpen((v) => !v)}
+          className="min-w-0 flex-1 text-left"
+          aria-expanded={open}
+        >
+          <span className="flex items-center gap-1 text-[11px] font-extrabold text-moss-dark">
+            <Clock size={10} /> {time}
+          </span>
+          <p className="text-[14px] font-bold leading-tight text-ink">{place.name}</p>
+          {note && <p className="mt-0.5 text-[11px] text-ink-soft">{note}</p>}
+        </button>
+        {place.source === 'traveller' && !draggable && (
+          <span className="shrink-0 rounded-full bg-blush/60 px-2 py-0.5 text-[9px] font-extrabold text-[#9c5a72]">
+            Local pick
+          </span>
+        )}
+        {draggable && (
+          <button
+            aria-label={`Reorder ${place.name}`}
+            onPointerDown={(e) => controls.start(e)}
+            className="-mr-1 shrink-0 cursor-grab touch-none rounded-lg p-1.5 text-ink-soft/60 transition hover:bg-black/5 hover:text-ink active:cursor-grabbing"
+          >
+            <GripVertical size={16} />
+          </button>
+        )}
+      </div>
+
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="overflow-hidden"
+        >
+          <div className="mt-1.5 rounded-2xl bg-white/80 p-2">
+            <p className="mb-1.5 px-0.5 text-[10px] font-extrabold uppercase tracking-wide text-ink-soft">
+              Move to day
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {Array.from({ length: dayCount }, (_, i) => i + 1).map((d) => (
+                <button
+                  key={d}
+                  disabled={d === currentDay}
+                  onClick={() => {
+                    onMove(d)
+                    setOpen(false)
+                  }}
+                  className={`h-7 w-7 rounded-lg text-[12px] font-extrabold transition ${
+                    d === currentDay
+                      ? 'bg-moss-dark text-white'
+                      : 'bg-sage-light text-moss-dark hover:brightness-95'
+                  }`}
+                >
+                  {d}
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  onRemove()
+                  setOpen(false)
+                }}
+                className="ml-auto flex items-center gap-1 rounded-lg px-2 text-[11px] font-bold text-coral transition hover:bg-coral/10"
+              >
+                <Trash2 size={12} /> Remove
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </Reorder.Item>
   )
 }

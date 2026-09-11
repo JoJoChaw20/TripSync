@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { CalendarRange, MapPin, Plus, Trash2, Users, Wallet } from 'lucide-react'
+import { BedDouble, CalendarRange, MapPin, PlaneTakeoff, Plus, Trash2, Users, Wallet } from 'lucide-react'
 import { Button, Card } from '../components/ui'
-import { travelers, type TripLeg, type TripSummary } from '../data/mockData'
+import { cityCentre, places, travelers, type TripLeg, type TripSummary } from '../data/mockData'
 import { dateRange, setTotalDays, totalDays as sumDays } from '../lib/trip'
 
 const CITIES = [
@@ -33,8 +33,33 @@ export default function TripSettings({
   const [people, setPeople] = useState(trip.travelerCount)
   const [legs, setLegs] = useState<TripLeg[]>(trip.legs)
   const [adding, setAdding] = useState(false)
+  const [arrive, setArrive] = useState(trip.arrive)
+  const [depart, setDepart] = useState(trip.depart)
 
   const total = sumDays(legs)
+
+  function setStayName(i: number, name: string) {
+    setLegs((ls) =>
+      ls.map((l, n) => {
+        if (n !== i) return l
+        if (!name.trim()) return { ...l, stay: undefined }
+        const base = l.stay ?? { ...cityCentre(l.city), checkIn: 900, checkOut: 720 }
+        return { ...l, stay: { ...base, name } }
+      }),
+    )
+  }
+
+  /** No geocoder, so anchor the hotel to a place we already know the spot of. */
+  function setStayNear(i: number, placeId?: string) {
+    setLegs((ls) =>
+      ls.map((l, n) => {
+        if (n !== i || !l.stay) return l
+        const pin = placeId ? places.find((pl) => pl.id === placeId) : undefined
+        const at = pin ? { lat: pin.lat, lng: pin.lng } : cityCentre(l.city)
+        return { ...l, stay: { ...l.stay, ...at, near: placeId } }
+      }),
+    )
+  }
 
   function setLegDays(i: number, days: number) {
     setLegs((ls) => ls.map((l, n) => (n === i ? { ...l, days: Math.max(1, days) } : l)))
@@ -47,6 +72,8 @@ export default function TripSettings({
       travelerCount: people,
       legs,
       days: total,
+      arrive,
+      depart,
       // Dates follow the length — they used to keep whatever they were created with.
       dates: dateRange(total),
       flag: legs[0].flag,
@@ -75,7 +102,8 @@ export default function TripSettings({
       <Section icon={MapPin} label={legs.length > 1 ? `Cities · ${legs.length} stops` : 'City'}>
         <div className="flex flex-col gap-2">
           {legs.map((leg, i) => (
-            <Card key={`${leg.city}-${i}`} className="flex items-center gap-2 p-2.5">
+            <Card key={`${leg.city}-${i}`} className="p-2.5">
+              <div className="flex items-center gap-2">
               <span className="text-lg">{leg.flag}</span>
               <p className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-ink">{leg.city}</p>
               <div className="flex shrink-0 items-center gap-1">
@@ -91,6 +119,43 @@ export default function TripSettings({
                   <Trash2 size={13} />
                 </button>
               )}
+              </div>
+
+              {/* Where you sleep decides where every day starts. */}
+              <div className="mt-2 border-t border-black/[0.06] pt-2">
+                <label className="mb-1 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide text-ink-soft">
+                  <BedDouble size={11} /> Where you're staying
+                </label>
+                <input
+                  value={leg.stay?.name ?? ''}
+                  onChange={(e) => setStayName(i, e.target.value)}
+                  placeholder="Hotel or area — optional"
+                  className="w-full rounded-xl border-2 border-black/10 bg-white px-2.5 py-1.5 text-[13px] font-semibold text-ink outline-none focus:border-moss-dark"
+                />
+                {leg.stay && (
+                  <>
+                    <p className="mb-1 mt-1.5 text-[10px] font-bold text-ink-soft">Nearest to</p>
+                    <div className="flex flex-wrap gap-1">
+                      <NearChip
+                        label="City centre"
+                        active={!leg.stay.near}
+                        onClick={() => setStayNear(i, undefined)}
+                      />
+                      {places
+                        .filter((pl) => pl.city === leg.city)
+                        .slice(0, 5)
+                        .map((pl) => (
+                          <NearChip
+                            key={pl.id}
+                            label={`${pl.image} ${pl.name}`}
+                            active={leg.stay?.near === pl.id}
+                            onClick={() => setStayNear(i, pl.id)}
+                          />
+                        ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </Card>
           ))}
         </div>
@@ -118,6 +183,16 @@ export default function TripSettings({
             <Plus size={14} /> Add another city
           </button>
         )}
+      </Section>
+
+      <Section icon={PlaneTakeoff} label="Flights">
+        <div className="grid grid-cols-2 gap-2">
+          <TimeField label="Land" value={arrive} onChange={setArrive} />
+          <TimeField label="Fly home" value={depart} onChange={setDepart} />
+        </div>
+        <p className="mt-1.5 pl-1 text-[11px] font-semibold text-ink-soft">
+          Day one starts after you land; the last day ends in time for check-in.
+        </p>
       </Section>
 
       <Section icon={Users} label="Travellers">
@@ -206,5 +281,45 @@ function Section({
       </p>
       {children}
     </div>
+  )
+}
+
+function NearChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`max-w-[46%] truncate rounded-full px-2 py-1 text-[10px] font-bold transition ${
+        active ? 'bg-moss-dark text-white' : 'bg-sage-light text-moss-dark'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
+function TimeField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value?: number
+  onChange: (v: number | undefined) => void
+}) {
+  const text = value === undefined ? '' : `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="pl-0.5 text-[10px] font-bold text-ink-soft">{label}</span>
+      <input
+        type="time"
+        value={text}
+        onChange={(e) => {
+          const v = e.target.value
+          if (!v) return onChange(undefined)
+          onChange(Number(v.slice(0, 2)) * 60 + Number(v.slice(3, 5)))
+        }}
+        className="rounded-xl border-2 border-black/10 bg-white px-2.5 py-2 text-[13px] font-extrabold text-ink outline-none focus:border-moss-dark"
+      />
+    </label>
   )
 }

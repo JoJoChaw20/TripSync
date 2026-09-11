@@ -38,7 +38,7 @@ export function TripBar({
             <ChevronDown size={14} className="shrink-0 text-moss-dark" />
           </p>
           <p className="truncate text-[11px] font-semibold text-ink-soft">
-            {trip.dates} · {trip.travelerCount} travellers · {tripCount} trips
+            {trip.dates} · {trip.travelerCount} travellers · {tripCount} {tripCount === 1 ? 'trip' : 'trips'}
           </p>
         </button>
         <button

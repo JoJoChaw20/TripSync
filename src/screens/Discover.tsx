@@ -3,13 +3,14 @@ import { motion } from 'framer-motion'
 import { Bookmark, BookmarkCheck, Star, Sparkles, Users, Home as IndoorIcon, Plus, Search } from 'lucide-react'
 import { Button, Card, SectionLabel, Pill , ScreenFooter } from '../components/ui'
 import { MochiNote } from '../components/MochiNote'
-import { placesInCities, type Place } from '../data/mockData'
+import { cityCentre, placesInCities, type Place } from '../data/mockData'
 import type { ScreenProps } from './types'
 
 type Filter = 'all' | 'ai' | 'traveller'
 
 export default function Discover({
   onNext,
+  onImport,
   petEmotion,
   petMessage,
   savedIds,
@@ -24,6 +25,7 @@ export default function Discover({
   extraPlaces?: Place[]
   onToggleSave: (id: string) => void
   onAddPlace: (place: Place) => void
+  onImport?: () => void
   readOnly?: boolean
 }) {
   const [filter, setFilter] = useState<Filter>('all')
@@ -50,6 +52,7 @@ export default function Discover({
     const place: Place = {
       id: 'own-' + Date.now(),
       city,
+      ...cityCentre(city),
       name,
       type: 'attraction',
       tags: ['Yours'],
@@ -57,6 +60,10 @@ export default function Discover({
       priceLabel: 'Cost TBC',
       rating: 0,
       indoor: !isOutdoor,
+      opens: 540,
+      closes: 1200,
+      duration: 90,
+      addedBy: 't1',
       image: '📍',
       blurb: 'Added by you. Mochi will fit it around your other plans.',
       source: 'traveller',
@@ -76,6 +83,15 @@ export default function Discover({
       />
 
       <MochiNote emotion={petEmotion} message={petMessage} />
+
+      {onImport && !readOnly && (
+        <button
+          onClick={onImport}
+          className="mb-3 w-full rounded-2xl border border-dashed border-moss-dark/40 py-2 text-[12px] font-bold text-moss-dark transition hover:bg-sage-light/50"
+        >
+          Paste a list from a sheet or chat
+        </button>
+      )}
 
       {cities.length > 1 && (
         <div className="mb-3 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${cities.length}, minmax(0, 1fr))` }}>

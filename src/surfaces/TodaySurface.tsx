@@ -3,10 +3,10 @@ import { Clock, Cloud, CloudRain, Gamepad2, PlaneTakeoff, Sun, Wallet } from 'lu
 import type { LucideIcon } from 'lucide-react'
 import { Card } from '../components/ui'
 import { Pet } from '../components/Pet'
-import { originalItinerary, placeById, trips } from '../data/mockData'
+import { placeById, trips } from '../data/mockData'
+import { fromMin } from '../engine/buildPlan'
+import type { Disruption, PlanDay, ReplanResult } from '../engine/types'
 import type { SheetId } from '../navigation'
-
-const TODAY = 1 // Day 2 — Wed 23 Sep, the day the rain hits
 
 const forecast = [
   { h: '9AM', icon: Sun, tone: 'text-sun-dark' },
@@ -22,15 +22,23 @@ const forecast = [
  */
 export default function TodaySurface({
   tripId,
+  plan,
+  rain,
+  storm,
   onOpenSheet,
-  repairApplied,
+  repair,
 }: {
   tripId: string
-  onOpenSheet: (id: SheetId) => void
-  repairApplied: boolean
+  plan: PlanDay[]
+  rain: Disruption
+  storm: Disruption
+  onOpenSheet: (id: SheetId, disruption?: Disruption) => void
+  repair: ReplanResult | null
 }) {
-  const day = originalItinerary[TODAY]
+  const disruption = rain
   const trip = trips.find((t) => t.id === tripId)!
+  const repairApplied = repair !== null
+  const today = plan.find((d) => d.day === disruption.day) ?? plan[0]
 
   if (trip.status !== 'live') {
     return (
@@ -49,15 +57,19 @@ export default function TodaySurface({
       </div>
     )
   }
-  const items = repairApplied
-    ? [day.items[0], { time: '14:30', placeId: 'p6', note: 'Moved here — indoor, out of the rain' }, day.items[2]]
-    : day.items
+  const items = today.items.map((i) => ({
+    time: fromMin(i.startMin),
+    placeId: i.placeId,
+    note: i.note,
+  }))
 
   return (
     <div className="pb-2">
       <div className="mb-3">
-        <p className="text-[11px] font-extrabold uppercase tracking-wide text-moss-dark">Day {day.day} of 6 · live</p>
-        <h1 className="font-display text-xl font-extrabold text-ink">{day.date}</h1>
+        <p className="text-[11px] font-extrabold uppercase tracking-wide text-moss-dark">
+          Day {today.day} of {plan.length} · live
+        </p>
+        <h1 className="font-display text-xl font-extrabold text-ink">{today.city}</h1>
       </div>
 
       <Card className="mb-3 overflow-hidden p-0">
@@ -75,7 +87,7 @@ export default function TodaySurface({
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          onClick={() => onOpenSheet('repair')}
+          onClick={() => onOpenSheet('repair', rain)}
           className="mb-3 flex w-full items-start gap-3 rounded-3xl border border-coral/40 bg-coral/10 p-3 text-left shadow-soft transition hover:shadow-pop"
         >
           <Pet emotion="aggrieved" size={46} bob={false} />
@@ -85,7 +97,7 @@ export default function TodaySurface({
               I found a way to keep it. Want to see?”
             </p>
             <span className="mt-1.5 inline-block rounded-full bg-coral px-3 py-1 text-[11px] font-extrabold text-white">
-              See the fix →
+              See what I'd do →
             </span>
           </div>
         </motion.button>
@@ -96,12 +108,26 @@ export default function TodaySurface({
           className="mb-3 flex items-start gap-3 rounded-3xl border border-moss-dark/30 bg-sage-light/60 p-3"
         >
           <Pet emotion="happy" size={46} bob={false} />
-          <p className="flex-1 text-[13px] leading-snug text-ink">
-            “Sorted — the park moved to Friday morning when it's sunny.
-            <span className="font-extrabold"> You kept all 7 of your plans.</span>”
-          </p>
+          <p className="flex-1 text-[13px] leading-snug text-ink">“{repair?.reason}”</p>
         </motion.div>
       )}
+
+      {/* looking ahead: the one we cannot fully rescue */}
+      <button
+        onClick={() => onOpenSheet('repair', storm)}
+        className="mb-3 flex w-full items-start gap-3 rounded-3xl border border-sun-dark/40 bg-sun/10 p-3 text-left shadow-soft transition hover:shadow-pop"
+      >
+        <Pet emotion="sad" size={46} bob={false} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] leading-snug text-ink">
+            “Looking ahead — <span className="font-extrabold">storm all day Sunday</span>, your last day. I can't
+            move everything this time. Want to see what I'd do?”
+          </p>
+          <span className="mt-1.5 inline-block rounded-full bg-sun-dark px-3 py-1 text-[11px] font-extrabold text-white">
+            Sunday · see what I'd do →
+          </span>
+        </div>
+      </button>
 
       <Card className="p-4">
         <p className="mb-3 font-display text-sm font-extrabold text-ink">Today's schedule</p>
@@ -109,7 +135,7 @@ export default function TodaySurface({
           <div className="absolute bottom-2 left-[8px] top-2 w-0.5 bg-sage" />
           {items.map((item, idx) => {
             const place = placeById(item.placeId)
-            const moved = repairApplied && idx === 1
+            const moved = repair?.moves.some((m) => m.placeId === item.placeId) ?? false
             return (
               <motion.div key={`${item.placeId}-${idx}`} layout className="relative">
                 <span

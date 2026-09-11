@@ -2,6 +2,7 @@ import type { PetEmotion } from './components/Pet'
 
 export type SheetId =
   | 'trips'
+  | 'import'
   | 'settings'
   | 'share'
   | 'newtrip'
@@ -30,6 +31,12 @@ export const SHEETS: Record<SheetId, SheetMeta> = {
     subtitle: 'Switch workspace, or start a new one',
     pet: 'happy',
     petMessage: 'Which trip are we working on?',
+  },
+  import: {
+    title: 'Paste your list',
+    subtitle: 'From a sheet, a chat, or your notes',
+    pet: 'happy',
+    petMessage: "Already planned somewhere else? Paste it and I'll do the times.",
   },
   settings: {
     title: 'Trip settings',
@@ -74,8 +81,8 @@ export const SHEETS: Record<SheetId, SheetMeta> = {
     petMessage: "Let's make sure everyone pays their fair share.",
   },
   repair: {
-    title: 'Keeping your plan',
-    subtitle: 'Rearranged before anything new was suggested',
+    title: 'Your plan, fixed',
+    subtitle: 'Nothing new suggested until yours is exhausted',
     pet: 'shy',
     petMessage: 'I found a way to keep your original plan — just reordered!',
   },

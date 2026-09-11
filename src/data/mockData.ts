@@ -25,6 +25,15 @@ export interface Place {
   priceLabel: string
   rating: number
   indoor: boolean
+  lat: number
+  lng: number
+  /** Minutes from midnight. The engine will not schedule outside these. */
+  opens: number
+  closes: number
+  /** Typical minutes on site, used for overlap and day-capacity checks. */
+  duration: number
+  /** Who put this on the trip — the engine spreads losses fairly across people. */
+  addedBy: string
   image: string
   blurb: string
   source: 'ai' | 'traveller'
@@ -42,6 +51,12 @@ export const places: Place[] = [
     priceLabel: 'RM150',
     rating: 4.7,
     indoor: false,
+    lat: 23.1066,
+    lng: 113.3245,
+    opens: 570,
+    closes: 1350,
+    duration: 120,
+    addedBy: 't2',
     image: '🗼',
     blurb: 'Iconic 600m tower with observation decks over the Pearl River.',
     source: 'ai',
@@ -56,6 +71,12 @@ export const places: Place[] = [
     priceLabel: 'RM20',
     rating: 4.6,
     indoor: true,
+    lat: 23.129,
+    lng: 113.245,
+    opens: 510,
+    closes: 1050,
+    duration: 90,
+    addedBy: 't3',
     image: '🏛️',
     blurb: 'Ornate Qing-dynasty academic hall with intricate folk-art carvings.',
     source: 'ai',
@@ -70,6 +91,12 @@ export const places: Place[] = [
     priceLabel: 'Free entry',
     rating: 4.4,
     indoor: false,
+    lat: 23.125,
+    lng: 113.269,
+    opens: 600,
+    closes: 1320,
+    duration: 120,
+    addedBy: 't2',
     image: '🛍️',
     blurb: 'Historic pedestrian shopping street with a glass-floored Song dynasty ruin.',
     source: 'ai',
@@ -84,6 +111,12 @@ export const places: Place[] = [
     priceLabel: 'RM35/pax',
     rating: 4.9,
     indoor: true,
+    lat: 23.123,
+    lng: 113.243,
+    opens: 420,
+    closes: 1200,
+    duration: 60,
+    addedBy: 't1',
     image: '🍜',
     blurb: 'Tiny 12-seat shop famous for wonton noodles — no English menu, worth it.',
     source: 'traveller',
@@ -99,6 +132,12 @@ export const places: Place[] = [
     priceLabel: 'Free',
     rating: 4.5,
     indoor: false,
+    lat: 23.1235,
+    lng: 113.2395,
+    opens: 360,
+    closes: 1320,
+    duration: 90,
+    addedBy: 't3',
     image: '🌳',
     blurb: 'Quiet lakeside park, popular for morning tai chi and lotus ponds.',
     source: 'ai',
@@ -113,6 +152,12 @@ export const places: Place[] = [
     priceLabel: 'Free entry',
     rating: 4.3,
     indoor: true,
+    lat: 23.139,
+    lng: 113.325,
+    opens: 600,
+    closes: 1320,
+    duration: 150,
+    addedBy: 't4',
     image: '🏬',
     blurb: 'Massive indoor mall district — great backup plan on rainy days.',
     source: 'ai',
@@ -127,6 +172,12 @@ export const places: Place[] = [
     priceLabel: '~RM25/pax',
     rating: 4.6,
     indoor: false,
+    lat: 23.14,
+    lng: 113.264,
+    opens: 1080,
+    closes: 1410,
+    duration: 90,
+    addedBy: 't1',
     image: '🏮',
     blurb: 'Lantern-lit night snacks and street performers by the old city wall.',
     source: 'traveller',
@@ -142,6 +193,12 @@ export const places: Place[] = [
     priceLabel: 'Free',
     rating: 4.5,
     indoor: true,
+    lat: 23.1405,
+    lng: 113.2645,
+    opens: 540,
+    closes: 1020,
+    duration: 90,
+    addedBy: 't3',
     image: '🏺',
     blurb: '2,200 years of city history inside Zhenhai Tower.',
     source: 'ai',
@@ -156,6 +213,12 @@ export const places: Place[] = [
     priceLabel: 'Free',
     rating: 4.6,
     indoor: false,
+    lat: 23.107,
+    lng: 113.24,
+    opens: 360,
+    closes: 1320,
+    duration: 90,
+    addedBy: 't1',
     image: '🏝️',
     blurb: 'Colonial-era riverside island with banyan trees and old consulate buildings.',
     source: 'traveller',
@@ -171,6 +234,12 @@ export const places: Place[] = [
     priceLabel: 'RM5 (cable car optional)',
     rating: 4.7,
     indoor: false,
+    lat: 23.183,
+    lng: 113.296,
+    opens: 300,
+    closes: 1080,
+    duration: 180,
+    addedBy: 't3',
     image: '⛰️',
     blurb: 'City’s highest point — hike up or cable car, either way the skyline view is worth it.',
     source: 'traveller',
@@ -186,6 +255,12 @@ export const places: Place[] = [
     priceLabel: 'RM25/pax',
     rating: 4.7,
     indoor: true,
+    lat: 23.126,
+    lng: 113.29,
+    opens: 480,
+    closes: 900,
+    duration: 90,
+    addedBy: 't2',
     image: '🥟',
     blurb: 'Old Republic-era shophouses now packed with brunch spots and coffee stalls.',
     source: 'traveller',
@@ -201,6 +276,12 @@ export const places: Place[] = [
     priceLabel: 'RM18/pax',
     rating: 4.8,
     indoor: true,
+    lat: 23.118,
+    lng: 113.24,
+    opens: 360,
+    closes: 840,
+    duration: 60,
+    addedBy: 't4',
     image: '🥣',
     blurb: 'Family-run congee shop in the old western district, open since the 1980s.',
     source: 'traveller',
@@ -216,6 +297,12 @@ export const places: Place[] = [
     priceLabel: 'Free',
     rating: 4.6,
     indoor: false,
+    lat: 5.399,
+    lng: 100.273,
+    opens: 510,
+    closes: 1050,
+    duration: 120,
+    addedBy: 't1',
     image: '\u26E9\uFE0F',
     blurb: 'Hillside temple complex above Air Itam, best in the late afternoon.',
     source: 'ai',
@@ -230,6 +317,12 @@ export const places: Place[] = [
     priceLabel: 'RM15/pax',
     rating: 4.8,
     indoor: false,
+    lat: 5.418,
+    lng: 100.335,
+    opens: 1080,
+    closes: 1425,
+    duration: 75,
+    addedBy: 't2',
     image: '\uD83C\uDF62',
     blurb: 'Char kway teow and koay teow th\u0027ng from 6pm until late.',
     source: 'traveller',
@@ -245,6 +338,12 @@ export const places: Place[] = [
     priceLabel: 'RM25',
     rating: 4.5,
     indoor: true,
+    lat: 5.419,
+    lng: 100.338,
+    opens: 570,
+    closes: 1020,
+    duration: 75,
+    addedBy: 't3',
     image: '\uD83C\uDFDB\uFE0F',
     blurb: 'Restored Baba-Nyonya townhouse. Good rainy-day option.',
     source: 'ai',
@@ -259,6 +358,12 @@ export const places: Place[] = [
     priceLabel: 'RM30',
     rating: 4.7,
     indoor: false,
+    lat: 13.7465,
+    lng: 100.4927,
+    opens: 480,
+    closes: 1110,
+    duration: 120,
+    addedBy: 't1',
     image: '\uD83D\uDED5',
     blurb: 'Reclining Buddha and the oldest massage school in Thailand.',
     source: 'ai',
@@ -273,6 +378,12 @@ export const places: Place[] = [
     priceLabel: 'RM20/pax',
     rating: 4.7,
     indoor: true,
+    lat: 13.806,
+    lng: 100.549,
+    opens: 360,
+    closes: 1080,
+    duration: 90,
+    addedBy: 't2',
     image: '\uD83E\uDD6D',
     blurb: 'Fresh market with a food court locals actually eat at.',
     source: 'traveller',
@@ -288,9 +399,97 @@ export const places: Place[] = [
     priceLabel: 'Free entry',
     rating: 4.2,
     indoor: false,
+    lat: 3.144,
+    lng: 101.698,
+    opens: 600,
+    closes: 1380,
+    duration: 90,
+    addedBy: 't4',
     image: '\uD83C\uDFEE',
     blurb: 'Chinatown market street, busiest after dark.',
     source: 'ai',
+  },
+  {
+    id: 'vn1',
+    name: 'Ben Thanh Market',
+    city: 'Ho Chi Minh City',
+    type: 'shopping',
+    tags: ['Shopping', 'Food'],
+    price: 0,
+    priceLabel: 'Free entry',
+    rating: 4.2,
+    indoor: true,
+    lat: 10.7725,
+    lng: 106.698,
+    opens: 360,
+    closes: 1080,
+    duration: 90,
+    addedBy: 't2',
+    image: '🧺',
+    blurb: 'Covered market in District 1 - haggle, then eat at the back stalls.',
+    source: 'ai',
+  },
+  {
+    id: 'vn2',
+    name: 'Bui Vien walking street',
+    city: 'Ho Chi Minh City',
+    type: 'nightlife',
+    tags: ['Nightlife', 'Food'],
+    price: 30,
+    priceLabel: '~RM30/pax',
+    rating: 4.3,
+    indoor: false,
+    lat: 10.767,
+    lng: 106.693,
+    opens: 1080,
+    closes: 1440,
+    duration: 120,
+    addedBy: 't1',
+    image: '🍺',
+    blurb: 'Loud, bright and cheap. Best after 8pm.',
+    source: 'traveller',
+    recommender: { name: 'Mei Lin', emoji: '👩🏻', note: 'Sit upstairs - quieter, and you can see everything.' },
+  },
+  {
+    id: 'vn3',
+    name: 'Marble Mountains',
+    city: 'Da Nang',
+    type: 'attraction',
+    tags: ['Culture'],
+    price: 15,
+    priceLabel: 'RM15',
+    rating: 4.6,
+    indoor: false,
+    lat: 16.002,
+    lng: 108.263,
+    opens: 420,
+    closes: 1020,
+    duration: 150,
+    addedBy: 't1',
+    image: '⛰️',
+    blurb: 'Caves and pagodas in five limestone hills. Lift up, walk down.',
+    source: 'ai',
+  },
+  {
+    id: 'vn4',
+    name: 'Han Market',
+    city: 'Da Nang',
+    type: 'restaurant',
+    tags: ['Food', 'Shopping'],
+    price: 20,
+    priceLabel: 'RM20/pax',
+    rating: 4.4,
+    indoor: true,
+    lat: 16.069,
+    lng: 108.225,
+    opens: 360,
+    closes: 1140,
+    duration: 75,
+    addedBy: 't2',
+    image: '🍜',
+    blurb: 'Riverside market. Upstairs for mi quang and banh xeo.',
+    source: 'traveller',
+    recommender: { name: 'Wei Jian', emoji: '🧑🏻', note: 'Second row, the stall with the blue stools.' },
   },
 ]
 
@@ -401,9 +600,33 @@ export const originalItinerary: ItineraryDay[] = [
     day: 6,
     date: 'Sun, 27 Sep',
     label: 'Departure',
-    items: [{ time: '12:00', placeId: 'p1', note: 'Last-minute souvenirs, airport transfer' }],
+    items: [{ time: '10:00', placeId: 'p9', note: 'Riverside walk before the airport' }],
   },
 ]
+
+/** Rough city centres, so a place you typed still has a plausible location. */
+const CENTRES: Record<string, [number, number]> = {
+  guangzhou: [23.1291, 113.2644],
+  shenzhen: [22.5431, 114.0579],
+  'hong kong': [22.3193, 114.1694],
+  'george town': [5.4141, 100.3288],
+  penang: [5.4141, 100.3288],
+  'kuala lumpur': [3.139, 101.6869],
+  bangkok: [13.7563, 100.5018],
+  ayutthaya: [14.3532, 100.5689],
+  'ho chi minh city': [10.8231, 106.6297],
+  hanoi: [21.0278, 105.8342],
+  'da nang': [16.0544, 108.2022],
+  singapore: [1.3521, 103.8198],
+  seoul: [37.5665, 126.978],
+  taipei: [25.033, 121.5654],
+  bali: [-8.4095, 115.1889],
+}
+
+export const cityCentre = (city: string): { lat: number; lng: number } => {
+  const hit = CENTRES[city.trim().toLowerCase()]
+  return hit ? { lat: hit[0], lng: hit[1] } : { lat: 0, lng: 0 }
+}
 
 export const placeById = (id: string) => places.find((p) => p.id === id)!
 
@@ -437,10 +660,23 @@ export const tripMeta = {
   currency: 'RM',
 }
 
+export interface Stay {
+  name: string
+  lat: number
+  lng: number
+  /** Minutes from midnight. You cannot drop bags before check-in. */
+  checkIn: number
+  checkOut: number
+  /** A place we know the location of, used to anchor the hotel. */
+  near?: string
+}
+
 export interface TripLeg {
   city: string
   flag: string
   days: number
+  /** Where you're sleeping on this leg. Days start and end here. */
+  stay?: Stay
 }
 
 export interface TripSummary {
@@ -459,6 +695,9 @@ export interface TripSummary {
   cover: string
   highlight: string
   notes?: string
+  /** Minutes from midnight, local. Landing and take-off bound the trip. */
+  arrive?: number
+  depart?: number
 }
 
 /** The workspace holds many trips. Guangzhou is just the one that's open. */
@@ -470,21 +709,43 @@ export const trips: TripSummary[] = [
     destination: 'Guangzhou, China',
     dates: '22 – 27 Sep 2026',
     days: 6,
-    legs: [{ city: 'Guangzhou', flag: '🇨🇳', days: 6 }],
+    legs: [
+      {
+        city: 'Guangzhou',
+        flag: '🇨🇳',
+        days: 6,
+        stay: { name: 'Tianhe Serviced Apartment', lat: 23.135, lng: 113.32, checkIn: 900, checkOut: 720 },
+      },
+    ],
     travelerCount: 4,
     status: 'live',
     budget: 2000,
+    arrive: 690, // lands 11:30 on day 1
+    depart: 1180, // takes off 19:40 on the last day
     cover: '🗼',
     highlight: 'Day 2 of 6 · rain rerouted this afternoon',
   },
   {
     id: 'hcm2026',
-    name: 'Ho Chi Minh City',
+    name: 'Vietnam: Saigon + Da Nang',
     flag: '🇻🇳',
-    destination: 'Ho Chi Minh City, Vietnam',
+    destination: 'Ho Chi Minh City → Da Nang',
     dates: '18 – 21 Dec 2026',
     days: 4,
-    legs: [{ city: 'Ho Chi Minh City', flag: '🇻🇳', days: 4 }],
+    legs: [
+      {
+        city: 'Ho Chi Minh City',
+        flag: '🇻🇳',
+        days: 2,
+        stay: { name: 'District 1 Guesthouse', lat: 10.776, lng: 106.7, checkIn: 840, checkOut: 720 },
+      },
+      {
+        city: 'Da Nang',
+        flag: '🇻🇳',
+        days: 2,
+        stay: { name: 'My Khe Beach Hotel', lat: 16.06, lng: 108.24, checkIn: 840, checkOut: 720 },
+      },
+    ],
     travelerCount: 2,
     status: 'planning',
     budget: 1400,
@@ -515,7 +776,12 @@ export const trips: TripSummary[] = [
     dates: '14 – 18 Nov 2025',
     days: 5,
     legs: [
-      { city: 'Bangkok', flag: '🇹🇭', days: 3 },
+      {
+        city: 'Bangkok',
+        flag: '🇹🇭',
+        days: 3,
+        stay: { name: 'Riverside Hostel', lat: 13.74, lng: 100.51, checkIn: 840, checkOut: 720 },
+      },
       { city: 'Ayutthaya', flag: '🇹🇭', days: 2 },
     ],
     travelerCount: 3,
