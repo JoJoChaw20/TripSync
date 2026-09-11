@@ -1,4 +1,4 @@
-import { CheckCircle2, Plus, Star, Users } from 'lucide-react'
+import { CheckCircle2, Home, Plus, Star, Users } from 'lucide-react'
 import { Card, Pill } from '../components/ui'
 import { type TripSummary } from '../data/mockData'
 
@@ -18,12 +18,15 @@ export default function Trips({
   readOnly,
   onOpen,
   onNewTrip,
+  onLeaveSample,
 }: {
   currentId: string
   trips: TripSummary[]
   readOnly?: boolean
   onOpen: (id: string) => void
   onNewTrip: () => void
+  /** Only set while the sample is the only thing loaded — see App. */
+  onLeaveSample?: () => void
 }) {
   return (
     <div className="pb-2">
@@ -100,6 +103,16 @@ export default function Trips({
       <p className="mt-1 text-center text-[11px] font-semibold text-ink-soft">
         Every trip keeps its own places, budget and group.
       </p>
+
+      {/* You came in to look around; you should be able to leave the same way. */}
+      {onLeaveSample && (
+        <button
+          onClick={onLeaveSample}
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-black/[0.08] py-2.5 text-[12px] font-extrabold text-ink-soft transition hover:bg-black/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-moss-dark"
+        >
+          <Home size={13} /> Leave the sample and start your own
+        </button>
+      )}
     </div>
   )
 }

@@ -8,7 +8,7 @@
 
 **Presentation Slides:** _[Public Link, TODO]_
 
-**Live demo:** https://trip-sync-blue.vercel.app
+**Live demo:** https://trip-sync-blue.vercel.app/?demo=1 *(the bare URL opens the empty cold start; `?demo=1` loads the sample trip)*
 
 > A collaborative travel workspace: AI-optimized itineraries, recommendations from real travellers, and a **Preservation-First replanning engine** that adapts your trip when the weather (or the world) doesn't cooperate.
 
@@ -41,7 +41,7 @@ Group trips are planned once, on a spreadsheet or a shared doc, and then left to
 | Expense splitting | Built-in trip budget and cost-splitting among group members | None built in; commonly paired with Splitwise or similar | Built in, with automatic settle-up (minimum number of transfers) |
 | Pet / companion & gamification | None | None | Mochi reacts to what's happening on the trip, and turns a disruption's free time into a group mini-game (Colour Walk) |
 
-*Sources: [Wanderlog's own expense-splitting page](https://wanderlog.com/travel-budget-expense-splitting-app), [TripIt Trip Cost feature docs](https://help.tripit.com/en/support/solutions/articles/103000063403-trip-cost-feature), [TripIt flight alerts docs](https://help.tripit.com/en/support/solutions/articles/103000063296-flight-alerts). The Wanderlog/TripIt rows describe their shipped, live products; the TripSync rows describe this prototype, where the expense settle-up math and read-only share links are real, working code, and the disruption-detection and AI scoring are demonstrated against scripted/mock scenarios pending the API integrations in the Build plan below.*
+*Sources: [Wanderlog's own expense-splitting page](https://wanderlog.com/travel-budget-expense-splitting-app), [TripIt Trip Cost feature docs](https://help.tripit.com/en/support/solutions/articles/103000063403-trip-cost-feature), [TripIt flight alerts docs](https://help.tripit.com/en/support/solutions/articles/103000063296-flight-alerts). The Wanderlog/TripIt rows describe their shipped, live products; the TripSync rows describe this prototype, where the replanning engine, the schedule builder, travel-time estimation and the expense settle-up math are real, working code. What is still mocked is the *input*: the disruption is triggered from a scripted scenario rather than a live weather feed, and the itinerary scores are hand-authored rather than model-generated. Both are API integrations in the Build plan below.*
 
 ### Our Solution
 
@@ -51,6 +51,10 @@ TripSync is a collaborative trip-planning workspace that generates AI-scored iti
 
 - **AI-scored itinerary options** — multiple candidate plans ranked on budget fit, group satisfaction, preference match, travel efficiency, convenience, and schedule feasibility, with an in-line feedback loop to tweak and regenerate.
 - **Discover** — a place browser mixing AI recommendations and real-traveller-submitted spots, with save/bookmark and the ability to add your own places into the plan.
+- **Bring a plan you already have** — paste a list from a spreadsheet, a chat thread or your notes, and TripSync parses it into real stops: it understands bullets, numbering, `Day 2:` prefixes and day headings, matches names against known places, and keeps anything it doesn't recognise as a place of your own rather than dropping it silently.
+- **A schedule that is physically possible** — stops are timed against real door-to-door travel between them (walking, transit or taxi chosen by distance), opening hours are respected, and arrival and departure times bound the first and last day, so the plan never assumes you teleport or sightsee before you land.
+- **Multi-city trips** — a trip is a series of legs with their own city and accommodation; moving between them costs a realistic road, rail or air journey, and that time is taken out of the day rather than ignored.
+- **Meal gaps called out** — a day of sightseeing with nowhere to eat gets flagged, with somewhere nearby that is actually open at that hour, without TripSync booking the time for you.
 - **Preservation-First replanning** — when a disruption is detected (e.g. rain forecast on an outdoor day), TripSync rearranges saved places first, so every place the group already committed to still gets visited, before ever suggesting something new.
 - **Flight delay auto-reflow** — a changed flight time automatically reflows the remaining schedule and surfaces "bonus" activities in the time that opens up.
 - **Colour Walk** — a 30-minute group mini-game the trip pet offers when a disruption leaves an unplanned gap; a colour-based photo scavenger hunt with a shape-based mode for colour-blind travellers.
@@ -199,17 +203,32 @@ flowchart TD
 | Date | Mentor | Feedback Received | What Was Changed |
 | --- | --- | --- | --- |
 | 8/9/2026 | Janelle Tan | Mochi (the pet) is a distinctive, memorable feature that genuinely sets TripSync apart from other travel apps, and it should be treated as the product's bright spot. Rather than spreading effort across many features, the team should pick the strongest one and focus on making it shine. | We stopped assuming that more features meant a stronger submission, and three concrete things changed as a result. First, Mochi is now framed as the product's *interface* rather than a mascot: it is the thing that surfaces a disruption, explains why, and asks permission (see the pet entry in section 4 and its own row in the competitor comparison in section 1). Second, our three-week build plan protects the Preservation-First engine as the one untouchable week. Third, breadth features that would have competed for that time, realtime sync and LLM-scored itineraries, were explicitly demoted to stretch goals and named as the first things we cut. |
+| 11/9/2026 | Janelle Tan | The UI and the existing feature set already do the job well for group trip planning. No changes were requested; the advice was to keep the current scope, focus on the features we already have and polish them, and make sure the app flows smoothly from one step to the next. | Nothing was redirected, the session confirmed the scope we set on 8/9. We kept the feature set frozen, added nothing new, and put the remaining time into polishing the existing features and smoothing the flow between steps. |
 
 ---
 
 ## 3. Design & Prototype
 
-**UI Prototype:** https://trip-sync-blue.vercel.app
+**UI Prototype:** https://trip-sync-blue.vercel.app/?demo=1
+
+The bare link opens the app the way a new user meets it: an empty cold start offering three ways in (start a trip, paste a list you already have, or load the sample). **Add `?demo=1` to land directly in the seeded 4-person Guangzhou trip**, which is the fastest route to the replanning demo. `?view=1` opens any trip read-only, which is what a share link hands a viewer.
+
+### How the app is organised
+
+TripSync is not a sequence of screens you walk through once. It is **three surfaces matching the three phases of a trip**, switched from a bottom tab bar, with everything else opening as a drawer over whichever surface you are on:
+
+| Surface | Phase | What lives there |
+| --- | --- | --- |
+| **Plan** | Before | The itinerary itself: day-by-day stops with real travel time between them, drag to reorder, meal gaps called out, and the trip grid across multiple cities |
+| **Today** | During | The one day you are actually in, plus the disruption when there is one, Mochi's alert, and the repair |
+| **Memories** | After | The retrospective: actual spend against budget, ratings, and what the trip taught TripSync about the group |
+
+Adding places, money, group preferences, trip settings, sharing, the flight-status view and Colour Walk all open as drawers rather than navigating away, so the group never loses sight of the plan they are editing. Every panel's title and Mochi's line for it are defined in one file (`src/navigation.ts`), which is why a panel can be a page or a drawer without the screen knowing the difference.
 
 | | |
 | --- | --- |
-| ![Welcome screen introducing Mochi and TripSync's tagline](docs/screenshots/01-welcome.png) **Welcome.** Mochi and the pitch, in one screen: plan together, let it adapt when life happens. | ![Discover screen with AI and traveller-recommended places for Guangzhou](docs/screenshots/02-discover.png) **Discover.** AI picks and real-traveller recommendations side by side, filterable, saved straight into the trip. |
-| ![AI Trip Generator showing the Budget Saver plan scored across six dimensions](docs/screenshots/03-ai-plans.png) **AI-scored plans.** Three itinerary options, each transparently scored on budget fit, group satisfaction, preference match, and more. | ![Preservation-First replanning screen walking through the four-step process](docs/screenshots/04-replanning.png) **Preservation-First replanning.** Rain is detected, an outdoor activity is identified, and saved places are rearranged before anything new is suggested. |
+| ![Cold start screen asking where are you going, with three ways to begin](docs/screenshots/01-cold-start.png) **Cold start.** No stranger's itinerary and no marketing page: start a trip, paste a list you already have, or look around the sample. | ![Discover screen with AI and traveller-recommended places for Guangzhou](docs/screenshots/02-discover.png) **Discover.** AI picks and real-traveller recommendations side by side, filterable, saved straight into the trip. |
+| ![AI Trip Generator showing the Budget Saver plan scored across six dimensions](docs/screenshots/03-ai-plans.png) **AI-scored plans.** Three itinerary options, each transparently scored on budget fit, group satisfaction, preference match, and more. | ![Replanning drawer showing Liwan Lake Park moved from 14:00 to 11:15 with everything else kept](docs/screenshots/04-replanning.png) **Preservation-First replanning.** Real engine output, not a mockup: the rained-out park is reslotted earlier the same day, every other stop is untouched, and the freed window is named along with somewhere indoors that is open. |
 | ![Flight delay screen showing the original 18:00 departure pushed to 23:00](docs/screenshots/05-flight-delay.png) **Flight delay auto-reflow.** A 5-hour delay becomes a bonus noodle run instead of a scramble at the gate. | ![Colour Walk mini-game assigning each traveller a colour](docs/screenshots/06-colour-walk.png) **Colour Walk.** The disruption's free two hours become a group photo scavenger hunt, with a shape-based mode for colour-blind travellers. |
 | ![Group expense list with per-person totals and net balance](docs/screenshots/07-expenses.png) **Expense tracking.** Every shared cost logged, with the minimal set of settle-up transfers computed automatically. | ![Post-trip retrospective for the Penang Weekend trip showing spend, rating, and memories](docs/screenshots/08-post-trip.png) **Post-trip retrospective.** Actual spend vs. budget, a rating, shared memories, and a profile TripSync carries into the next trip. |
 
@@ -217,7 +236,9 @@ flowchart TD
 
 ## 4. What Makes It Different
 
-- **Preservation-First replanning, not regeneration.** Most planners either freeze the itinerary or throw it out and regenerate from scratch after a disruption. TripSync's replanning engine explicitly re-slots the places the group already saved before it ever suggests something new, so a rained-out afternoon doesn't cost you the attraction you actually wanted to see.
+- **Preservation-First replanning, not regeneration.** Most planners either freeze the itinerary or throw it out and regenerate from scratch after a disruption. TripSync's engine works down a deliberate ladder — **reslot** the stop later the same day, **swap** it with a stop on another day, **move** it into a free slot, and only **drop and suggest something new** when nothing else fits. A new recommendation is the last rung, never the first move, so a rained-out afternoon doesn't cost you the attraction you actually wanted to see. This is real working code in `src/engine/replan.ts`, not a scripted screen, and it is guarded by 12 self-check scenarios that run on every dev start.
+- **When something must be lost, it isn't always the same person's plan.** The engine tracks who added each place and rescues stops from whoever has already lost the most, then reports per-traveller how much of each person's list survived. Fairness in a group trip is not just scoring the plan up front; it is who absorbs the damage when the day breaks.
+- **A schedule that is physically possible.** Stops are timed against real door-to-door travel between them, with the mode picked by distance, and against opening hours, your arrival and departure times, and the hours a multi-city hop actually eats. Most planners will happily hand a group a day that cannot be walked.
 - **A pet that notices things going wrong, not a notification.** Wanderlog and TripIt surface disruptions as banners and push alerts. TripSync's Mochi is the one surfacing the same information (rain coming, a flight delayed, an attraction closed), but as a character with a face and a reaction, not a system notification. Neither Wanderlog nor TripIt has a companion built into the product like this; it's not a cosmetic skin, it's the interface travellers actually talk to when something changes.
 - **A disruption becomes an activity, not just a problem.** Colour Walk turns a scheduling gap (caused by weather, delay, or a cancelled slot) into a bonded group activity instead of dead time, with a shape-based mode built in for colour-blind travellers from day one.
 - **Group-fair AI scoring, shown transparently.** Itinerary options are scored per-traveller-preference and shown as explicit scores (budget fit, group satisfaction, preference match, efficiency, convenience, feasibility) rather than a black-box "recommended for you."

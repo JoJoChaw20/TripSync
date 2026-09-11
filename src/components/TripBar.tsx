@@ -13,12 +13,15 @@ export function TripBar({
   nextUp,
   onOpenTrips,
   onOpenBudget,
+  onHome,
 }: {
   trip: TripSummary
   tripCount: number
   nextUp: string
   onOpenTrips: () => void
   onOpenBudget: () => void
+  /** Only set while the sample is all that's loaded — see App. */
+  onHome?: () => void
 }) {
   const plan = tripPlans.find((p) => p.id === 'balanced')!
   const committed = trip.status === 'live' ? plan.cost : (trip.spent ?? 0)
@@ -27,7 +30,20 @@ export function TripBar({
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b border-black/[0.06] bg-cream/90 backdrop-blur-md">
       <div className="flex items-center gap-2.5 px-4 pb-2 pt-3">
-        <AppIcon size={30} />
+        {/* You came in through Mochi, so Mochi is the way back out. Only
+            while there is nothing of your own to lose. */}
+        {onHome ? (
+          <button
+            onClick={onHome}
+            aria-label="Back to start"
+            title="Back to start"
+            className="shrink-0 rounded-full transition hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-moss-dark"
+          >
+            <AppIcon size={30} />
+          </button>
+        ) : (
+          <AppIcon size={30} />
+        )}
         <button
           onClick={onOpenTrips}
           aria-label="Switch trip"

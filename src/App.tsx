@@ -98,6 +98,28 @@ function App() {
   const meta = sheet ? SHEETS[sheet] : null
 
   const trip = tripList.find((t) => t.id === tripId) ?? tripList[0] ?? NO_TRIP
+
+  // True only while the sample is all there is. Once you've made a trip of
+  // your own, leaving would throw it away, so the exit stops being offered.
+  const onlySample =
+    tripList.length === seedTrips.length && tripList.every((t, i) => t.id === seedTrips[i].id)
+
+  // Back to the cold start, and back to a clean slate: the sample is a place
+  // you look around, not somewhere you get stuck. Offered from Mochi in the
+  // trip bar and from the trips drawer; withheld once you have a trip of your
+  // own, because leaving would throw it away.
+  const leaveSample = useCallback(() => {
+    setTripList([])
+    setTripId(activeTrip.id)
+    setSheet(null)
+    setSurface('plan')
+    setRepair(null)
+    setEdited(null)
+    setOwnPlaces([])
+    setPinnedByTrip({})
+    setAtByTrip({})
+  }, [])
+  const canLeaveSample = onlySample && !READ_ONLY
   const cities = trip.legs.map((l) => l.city)
   const savedIds = savedByTrip[trip.id] ?? []
   const pool = useMemo(() => [...ownPlaces, ...places], [ownPlaces])
@@ -299,6 +321,7 @@ function App() {
           nextUp={nextUp}
           onOpenTrips={() => setSheet('trips')}
           onOpenBudget={() => setSheet('settings')}
+          onHome={canLeaveSample ? leaveSample : undefined}
         />
 
         <main className="flex-1 px-4 pb-6 pt-4">
@@ -372,6 +395,7 @@ function App() {
               closeSheet()
             }}
             onNewTrip={() => setSheet('newtrip')}
+            onLeaveSample={canLeaveSample ? leaveSample : undefined}
           />
         )}
         {sheet === 'newtrip' && <CreateTrip onCreate={createTrip} />}

@@ -1,6 +1,7 @@
 import { cityCentre, originalItinerary, type Place, type TripLeg, type TripSummary } from '../data/mockData'
 import { scheduleLoose } from './replan'
 import { duration, interCityMinutes, longModeLabel } from './travel'
+import { dayChip } from '../lib/trip'
 import type { PlanDay } from './types'
 
 export const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5))
@@ -120,11 +121,15 @@ export function buildPlan(
   return { days, unplaced }
 }
 
-/** Day labels for the seeded trip keep their hand-written flavour. */
+/**
+ * Day labels. The seeded trip keeps its hand-written flavour; any trip with a
+ * start date gets real weekdays, so a date the user picked actually shows up
+ * on the plan rather than only in the trip bar.
+ */
 export function dayMeta(trip: TripSummary, index: number) {
   const hand = trip.id === 'gz2026' ? originalItinerary[index] : undefined
   return {
     label: hand?.label ?? `Day ${index + 1}`,
-    chip: hand?.date ?? `Day ${index + 1}`,
+    chip: hand?.date ?? dayChip(trip.startDate, index) ?? `Day ${index + 1}`,
   }
 }

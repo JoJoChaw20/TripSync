@@ -3,7 +3,7 @@ import { CalendarRange, MapPin, MessageSquare, Plus, Trash2, Users, Wallet } fro
 import { Button, Card } from '../components/ui'
 import { Pet } from '../components/Pet'
 import { travelers, type TripLeg, type TripSummary } from '../data/mockData'
-import { dateRange, setTotalDays, totalDays as sumDays } from '../lib/trip'
+import { dateRange, defaultStartISO, setTotalDays, toISODate, totalDays as sumDays } from '../lib/trip'
 
 /** Only a hint for the flag and cover art. Any city the user types is fine. */
 const KNOWN: Record<string, { flag: string; cover: string }> = {
@@ -47,6 +47,8 @@ export default function CreateTrip({ onCreate }: { onCreate: (trip: TripSummary)
   const [budget, setBudget] = useState(1200)
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
+  // Pre-filled so the field is never empty, but it is the user's to change.
+  const [start, setStart] = useState(defaultStartISO())
 
   const total = sumDays(legs)
 
@@ -69,7 +71,8 @@ export default function CreateTrip({ onCreate }: { onCreate: (trip: TripSummary)
       name: name.trim() || legs.map((l) => l.city).join(' + '),
       flag: legs[0].flag ?? first.flag,
       destination: legs.map((l) => l.city).join(' → '),
-      dates: dateRange(total),
+      dates: dateRange(total, start),
+      startDate: start,
       days: total,
       legs,
       travelerCount: people,
@@ -153,12 +156,23 @@ export default function CreateTrip({ onCreate }: { onCreate: (trip: TripSummary)
       </Field>
 
       {legs.length > 0 && (
-        <Field icon={CalendarRange} label="How long">
+        <Field icon={CalendarRange} label="When">
+          <label className="mb-2 flex items-center gap-3 rounded-2xl border-2 border-moss/30 bg-white px-3 py-2.5 focus-within:border-moss-dark">
+            <span className="shrink-0 text-[12px] font-extrabold text-ink-soft">Starts</span>
+            <input
+              type="date"
+              value={start}
+              min={toISODate(new Date())}
+              onChange={(e) => setStart(e.target.value || defaultStartISO())}
+              aria-label="First day of the trip"
+              className="min-w-0 flex-1 bg-transparent text-[14px] font-extrabold text-ink outline-none"
+            />
+          </label>
           <div className="flex items-center gap-3 rounded-2xl border-2 border-moss/30 bg-white px-3 py-2.5">
             <Stepper value={total} onChange={(v) => setLegs((ls) => setTotalDays(ls, v))} />
             <div className="min-w-0">
               <p className="font-display text-lg font-extrabold leading-none text-moss-dark">{total} days</p>
-              <p className="mt-0.5 truncate text-[11px] font-semibold text-ink-soft">{dateRange(total)}</p>
+              <p className="mt-0.5 truncate text-[11px] font-semibold text-ink-soft">{dateRange(total, start)}</p>
             </div>
           </div>
           {legs.length > 1 && (

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BedDouble, CalendarRange, MapPin, PlaneTakeoff, Plus, Trash2, Users, Wallet } from 'lucide-react'
 import { Button, Card } from '../components/ui'
 import { cityCentre, places, travelers, type TripLeg, type TripSummary } from '../data/mockData'
-import { dateRange, setTotalDays, totalDays as sumDays } from '../lib/trip'
+import { dateRange, defaultStartISO, setTotalDays, toISODate, totalDays as sumDays } from '../lib/trip'
 
 const CITIES = [
   { city: 'Guangzhou', flag: '🇨🇳' },
@@ -65,6 +65,10 @@ export default function TripSettings({
     setLegs((ls) => ls.map((l, n) => (n === i ? { ...l, days: Math.max(1, days) } : l)))
   }
 
+  // Trips made before dates were pickable have no start of their own; fall
+  // back to the same window they were originally labelled with.
+  const [start, setStart] = useState(trip.startDate ?? defaultStartISO())
+
   function save() {
     onSave({
       name: name.trim() || trip.name,
@@ -74,8 +78,10 @@ export default function TripSettings({
       days: total,
       arrive,
       depart,
-      // Dates follow the length — they used to keep whatever they were created with.
-      dates: dateRange(total),
+      // Dates follow the start date and the length, so editing either here
+      // never silently rewrites the trip to the default window.
+      startDate: start,
+      dates: dateRange(total, start),
       flag: legs[0].flag,
       destination: legs.map((l) => l.city).join(' → '),
     })
@@ -84,12 +90,22 @@ export default function TripSettings({
 
   return (
     <div className="pb-2">
-      <Section icon={CalendarRange} label="How long">
+      <Section icon={CalendarRange} label="When">
+        <label className="mb-2 flex items-center gap-3 rounded-2xl border-2 border-moss/30 bg-white px-3 py-2.5 focus-within:border-moss-dark">
+          <span className="shrink-0 text-[12px] font-extrabold text-ink-soft">Starts</span>
+          <input
+            type="date"
+            value={start}
+            onChange={(e) => setStart(e.target.value || toISODate(new Date()))}
+            aria-label="First day of the trip"
+            className="min-w-0 flex-1 bg-transparent text-[14px] font-extrabold text-ink outline-none"
+          />
+        </label>
         <div className="flex items-center gap-3 rounded-2xl border-2 border-moss/30 bg-white px-3 py-2.5">
           <Stepper value={total} onChange={(v) => setLegs((ls) => setTotalDays(ls, v))} />
           <div className="min-w-0">
             <p className="font-display text-lg font-extrabold leading-none text-moss-dark">{total} days</p>
-            <p className="mt-0.5 truncate text-[11px] font-semibold text-ink-soft">{dateRange(total)}</p>
+            <p className="mt-0.5 truncate text-[11px] font-semibold text-ink-soft">{dateRange(total, start)}</p>
           </div>
         </div>
         {legs.length > 1 && (

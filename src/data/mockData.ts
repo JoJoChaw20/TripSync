@@ -695,6 +695,8 @@ export interface TripSummary {
   cover: string
   highlight: string
   notes?: string
+  /** yyyy-mm-dd. Set when the user picked a start date; day labels follow it. */
+  startDate?: string
   /** Minutes from midnight, local. Landing and take-off bound the trip. */
   arrive?: number
   depart?: number
