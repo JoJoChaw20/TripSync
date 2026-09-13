@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Demo video working files — hundreds of MB of renders, and Pre-02.mp4 alone is
+# over GitHub's 100 MB hard limit. The scripts and prompts that produce them are
+# tracked; the footage itself lives outside git.
+docs/demo/animation/
+docs/demo/cut/
+docs/demo/cut-extra/
+docs/demo/screen/
