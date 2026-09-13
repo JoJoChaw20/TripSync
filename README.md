@@ -211,8 +211,6 @@ flowchart TD
 
 **UI Prototype:** https://trip-sync-blue.vercel.app/
 
-The bare link opens the app the way a new user meets it: an empty cold start offering three ways in (start a trip, paste a list you already have, or load the sample). **Add `?demo=1` to land directly in the seeded 4-person Guangzhou trip**, which is the fastest route to the replanning demo. `?view=1` opens any trip read-only, which is what a share link hands a viewer.
-
 ### How the app is organised
 
 TripSync is not a sequence of screens you walk through once. It is **three surfaces matching the three phases of a trip**, switched from a bottom tab bar, with everything else opening as a drawer over whichever surface you are on:
