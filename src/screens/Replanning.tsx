@@ -127,11 +127,16 @@ export default function Replanning({
           : `You keep ${kept} of ${total}.`}
       </p>
 
-      {result.gaps.map((gap) => {
+      {(() => {
+        // A wet afternoon leaves several holes, but naming all of them and
+        // suggesting the same mall three times reads as noise. Only the
+        // biggest one is worth filling.
+        const gap = [...result.gaps].sort((a, b) => b.toMin - b.fromMin - (a.toMin - a.fromMin))[0]
+        if (!gap) return null
         // Eight hours "free" on a washed-out day is not a gap, it's a lost day.
         const wholeDay = gap.toMin - gap.fromMin >= 8 * 60
         return (
-          <p key={gap.fromMin} className="mt-2 text-center text-[11px] font-semibold leading-snug text-ink-soft">
+          <p className="mt-2 text-center text-[11px] font-semibold leading-snug text-ink-soft">
             {wholeDay
               ? 'That day is a write-off — nothing outdoors will work.'
               : `${fromMin(gap.fromMin)}–${fromMin(gap.toMin)} ends up free.`}
@@ -139,7 +144,7 @@ export default function Replanning({
               ` ${gap.suggestions[0].image} ${gap.suggestions[0].name} is indoors and open.`}
           </p>
         )
-      })}
+      })()}
 
       <div className="mt-4 flex flex-col gap-2">
         <Button size="lg" onClick={() => onApply(result)}>

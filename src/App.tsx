@@ -42,7 +42,12 @@ const PLAN_PLACES: Record<string, string[]> = {
 }
 
 /** Today's problem: heavy rain over Guangzhou, 15:00–18:00 on day 2. */
-const RAIN: Disruption = { kind: 'weather', day: 2, fromMin: 900, toMin: 1080, label: 'Heavy rain from 3 PM' }
+/**
+ * Midday onwards, so there is no dry slot left on day 2 at all. The park
+ * cannot be re-timed and the ladder has to carry it to another day — which
+ * is the behaviour the demo video tells.
+ */
+const RAIN: Disruption = { kind: 'weather', day: 2, fromMin: 720, toMin: 1320, label: 'Heavy rain from midday' }
 
 /**
  * The hard one: a washout on the last full day. Nothing can move forwards

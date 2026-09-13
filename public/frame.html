@@ -1,0 +1,117 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>TripSync — phone frame</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  A phone bezel to screen-record the app in.
+
+  Open  /frame.html        -> the demo trip, ready to record
+        /frame.html?app=/  -> the cold start instead
+        /frame.html?chrome=0 -> hide the status bar and home indicator
+
+  The phone auto-scales to your window height, so make the window tall and it
+  fills the frame. Record the window, not the whole screen.
+-->
+<style>
+  :root { color-scheme: light }
+  html, body {
+    margin: 0; height: 100%;
+    background: #efe9da;
+    overflow: hidden;
+    font: 500 13px/1 'Nunito', -apple-system, 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* absolutely centred, because a grid clamps an item taller than the viewport
+     to the top and the scale then reads as off-centre */
+  #stage { position: absolute; top: 50%; left: 50%; transform-origin: center center }
+  .phone {
+    position: relative;
+    padding: 13px;
+    border-radius: 58px;
+    background: linear-gradient(160deg, #4a4238 0%, #322c25 55%, #4a4238 100%);
+    box-shadow:
+      0 2px 0 rgba(255,255,255,.18) inset,
+      0 26px 50px -12px rgba(74,66,56,.45),
+      0 6px 16px rgba(74,66,56,.22);
+  }
+  .phone::before, .phone::after {
+    content: ""; position: absolute; left: -3px; width: 3px;
+    border-radius: 3px 0 0 3px; background: #3a332b;
+  }
+  .phone::before { top: 168px; height: 34px }
+  .phone::after  { top: 216px; height: 62px }
+  .screen {
+    position: relative;
+    width: 430px; height: 932px;
+    border-radius: 46px; overflow: hidden; background: #fcf9e6;
+  }
+  /* the app gets the space between the status bar and the home indicator */
+  .screen iframe {
+    position: absolute; top: 30px; left: 0;
+    width: 430px; height: 882px; border: 0; display: block;
+  }
+  .bare .screen iframe { top: 0; height: 932px }
+  .bare .status, .bare .home { display: none }
+
+  .status {
+    position: absolute; inset: 0 0 auto 0; height: 30px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 26px; color: #4a4238; pointer-events: none;
+    font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12px;
+  }
+  .status .right { display: flex; align-items: center; gap: 4px }
+  .bars { display: flex; align-items: flex-end; gap: 1.5px; height: 9px }
+  .bars i { width: 2.5px; background: #4a4238; border-radius: 1px; display: block }
+  .bars i:nth-child(1) { height: 3px } .bars i:nth-child(2) { height: 5px }
+  .bars i:nth-child(3) { height: 7px } .bars i:nth-child(4) { height: 9px }
+  .batt {
+    width: 20px; height: 10px; border: 1.5px solid #4a4238; border-radius: 3px;
+    position: relative; padding: 1.5px;
+  }
+  .batt::after {
+    content: ""; position: absolute; right: -3px; top: 3px; width: 1.5px; height: 4px;
+    background: #4a4238; border-radius: 0 1px 1px 0;
+  }
+  .batt b { display: block; height: 100%; width: 72%; background: #4a4238; border-radius: 1px }
+  .home {
+    position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%);
+    width: 132px; height: 5px; border-radius: 3px; background: rgba(74,66,56,.34);
+    pointer-events: none;
+  }
+</style>
+
+<div id="stage">
+  <div class="phone" id="phone">
+    <div class="screen">
+      <iframe id="app" title="TripSync"></iframe>
+      <div class="status">
+        <span id="clock">9:41</span>
+        <span class="right">
+          <span class="bars"><i></i><i></i><i></i><i></i></span>
+          <span class="batt"><b></b></span>
+        </span>
+      </div>
+      <div class="home"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const q = new URLSearchParams(location.search)
+
+  // default to the loaded demo trip; ?app=/ gives you the cold start
+  const target = q.get('app') ?? '/?demo=1'
+  document.getElementById('app').src = new URL(target, location.origin).href
+
+  if (q.get('chrome') === '0') document.getElementById('phone').classList.add('bare')
+  if (q.get('clock')) document.getElementById('clock').textContent = q.get('clock')
+
+  // fill the window height so the recording is as large as the screen allows
+  const stage = document.getElementById('stage')
+  const fit = () => {
+    const scale = Math.min((innerHeight - 32) / 958, (innerWidth - 32) / 456, 1.6)
+    stage.style.transform = `translate(-50%, -50%) scale(${scale})`
+  }
+  addEventListener('resize', fit)
+  fit()
+</script>

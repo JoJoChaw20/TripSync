@@ -10,8 +10,8 @@ import type { SheetId } from '../navigation'
 
 const forecast = [
   { h: '9AM', icon: Sun, tone: 'text-sun-dark' },
-  { h: '12PM', icon: Sun, tone: 'text-sun-dark' },
-  { h: '3PM', icon: CloudRain, tone: 'text-sky', alert: true },
+  { h: '12PM', icon: CloudRain, tone: 'text-sky', alert: true },
+  { h: '3PM', icon: CloudRain, tone: 'text-sky' },
   { h: '6PM', icon: CloudRain, tone: 'text-sky' },
   { h: '9PM', icon: Cloud, tone: 'text-ink-soft' },
 ]
@@ -93,8 +93,8 @@ export default function TodaySurface({
           <Pet emotion="aggrieved" size={46} bob={false} />
           <div className="min-w-0 flex-1">
             <p className="text-[13px] leading-snug text-ink">
-              “Heavy rain from 3 PM 🌧️ — <span className="font-extrabold">Liwan Lake Park</span> won't work today.
-              I found a way to keep it. Want to see?”
+              “Heavy rain from midday 🌧️ — <span className="font-extrabold">Liwan Lake Park</span> won't work
+              today at all. I found a way to keep it. Want to see?”
             </p>
             <span className="mt-1.5 inline-block rounded-full bg-coral px-3 py-1 text-[11px] font-extrabold text-white">
               See what I'd do →
